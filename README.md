@@ -4,7 +4,7 @@
 
 ## Installation
 Clone the repository:
-git clone https://github.com/yourusername/structdyn.git cd structdyn
+git clone https://github.com/learnstructure/structdyn.git cd structdyn
 
 
 ## Usage

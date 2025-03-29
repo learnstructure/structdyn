@@ -6,10 +6,16 @@ Version: 0.1.0
 """
 
 from .sdf import SDF
-from .central_difference import CentralDifference
-from .utils import fs
+from .numerical_methods import CentralDifference, Interpolation
+from .utils import fs_elastoplastic, fs_hysteresis
 
 __version__ = "0.1.0"
 __author__ = "Abinash Mandal"
 
-__all__ = ["SDF", "CentralDifference", "fs"]
+__all__ = [
+    "SDF",
+    "CentralDifference",
+    "Interpolation",
+    "fs_elastoplastic",
+    "fs_hysteresis",
+]
