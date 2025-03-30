@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+
+
 def fs_elastoplastic(uy=0.02, fy=36000):
     """Elasto-plastic force-displacement relation"""
 
@@ -29,3 +32,11 @@ def fs_hysteresis(uy=0.02, fy=36000):  # non-linear force displacement relation
         return fs
 
     return get_fs_hysteresis
+
+
+def plot_displacement(time_steps, displacement):
+    plt.plot(time_steps, displacement, marker=".")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Displacement")
+    plt.legend()
+    plt.show()

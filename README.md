@@ -3,22 +3,34 @@
 `structdyn` is a Python library for solving single-degree-of-freedom (SDF) dynamic problems using numerical methods.
 
 ## Installation
-Clone the repository:
-git clone https://github.com/learnstructure/structdyn.git cd structdyn
+#Clone the repository:
+git clone https://github.com/learnstructure/structdyn.git 
+cd structdyn
+python -m examples.example1 #to see an example quickly
 
+#or install without cloning the repository:
+pip install git+https://github.com/learnstructure/structdyn.git
 
 ## Usage
 ```python
 import numpy as np
-from structdyn import SDF, CentralDifference, fs
+from structdyn import SDF, Interpolation, CentralDifference, fs_elastoplastic, fs_hysteresis
+#To quickly see an example from structure dynamics A.K. Chopra
+python -m examples.example1 
+
+## Custom Usage
+#Define load
+dt = 0.1
+time_steps = np.arange(0, 1.01, dt)
+load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
+load_values[time_steps >= 0.6] = 0
 
 # Define system properties
 sdf = SDF(m=45594, k=18e5, ji=0.05)
-time_steps = np.arange(0, 1.01, 0.1)
-load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
 
 # Solve using Central Difference Method
-solver = CentralDifference(sdf, dt=0.1, non_linear=True)
-displacement = solver.compute_solution(time_steps, load_values, fs)
+solver = Interpolation(sdf, dt)
+displacement, velocity= solver.compute_solution(time_steps, load_values)
+print("Displacement using Interpolation:\n", displacement)
 
 

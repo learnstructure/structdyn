@@ -7,7 +7,7 @@ Version: 0.1.0
 
 from .sdf import SDF
 from .numerical_methods import CentralDifference, Interpolation
-from .utils import fs_elastoplastic, fs_hysteresis
+from .utils import fs_elastoplastic, fs_hysteresis, plot_displacement
 
 __version__ = "0.1.0"
 __author__ = "Abinash Mandal"
