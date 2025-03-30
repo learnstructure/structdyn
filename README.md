@@ -3,22 +3,21 @@
 `structdyn` is a Python library for solving single-degree-of-freedom (SDF) dynamic problems using numerical methods.
 
 ## Installation
-#Clone the repository:
+### Clone the repository:
 git clone https://github.com/learnstructure/structdyn.git 
+
 cd structdyn
+
 python -m examples.example1 #to see an example quickly
 
-#or install without cloning the repository:
+### or install without cloning the repository:
 pip install git+https://github.com/learnstructure/structdyn.git
 
-## Usage
+## Custom Usage
 ```python
 import numpy as np
 from structdyn import SDF, Interpolation, CentralDifference, fs_elastoplastic, fs_hysteresis
-#To quickly see an example from structure dynamics A.K. Chopra
-python -m examples.example1 
 
-## Custom Usage
 #Define load
 dt = 0.1
 time_steps = np.arange(0, 1.01, dt)
