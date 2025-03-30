@@ -34,9 +34,9 @@ def fs_hysteresis(uy=0.02, fy=36000):  # non-linear force displacement relation
     return get_fs_hysteresis
 
 
-def plot_displacement(time_steps, displacement):
+def plot_displacement(time_steps, displacement, text=None):
     plt.plot(time_steps, displacement, marker=".")
     plt.xlabel("Time (s)")
     plt.ylabel("Displacement")
-    plt.legend()
+    plt.title(text)
     plt.show()

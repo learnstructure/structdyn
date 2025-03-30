@@ -8,6 +8,8 @@ Version: 0.1.0
 from .sdf import SDF
 from .numerical_methods import CentralDifference, Interpolation
 from .utils import fs_elastoplastic, fs_hysteresis, plot_displacement
+from .free_vibration import free_vibration
+from .forced_vibration import harmonic_vibration
 
 __version__ = "0.1.0"
 __author__ = "Abinash Mandal"
@@ -18,4 +20,6 @@ __all__ = [
     "Interpolation",
     "fs_elastoplastic",
     "fs_hysteresis",
+    "free_vibration_undamped",
+    "plot_displacement",
 ]
