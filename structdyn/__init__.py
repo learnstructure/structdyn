@@ -7,7 +7,7 @@ Version: 0.2.0
 
 from .sdf import SDF
 from .numerical_methods import CentralDifference, Interpolation
-from .utils import fs_elastoplastic, plot_displacement
+from .utils import fs_elastoplastic, plot_displacement, elcentro
 from .free_vibration import free_vibration
 from .forced_vibration import harmonic_vibration
 

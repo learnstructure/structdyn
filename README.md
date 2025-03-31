@@ -29,7 +29,7 @@ sdf = SDF(m=45594, k=18e5, ji=0.05)
 
 # Solve using Central Difference Method
 solver = Interpolation(sdf, dt)
-displacement, velocity= solver.compute_solution(time_steps, load_values)
+displacement, velocity, fs= solver.compute_solution(time_steps, load_values)
 print("Displacement using Interpolation:\n", displacement)
 
 
