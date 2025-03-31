@@ -2,16 +2,16 @@
 structdyn: A Python library for solving structural dynamics problems numerically.
 
 Author: Abinash Mandal
-Version: 0.1.0
+Version: 0.2.0
 """
 
 from .sdf import SDF
 from .numerical_methods import CentralDifference, Interpolation
-from .utils import fs_elastoplastic, fs_hysteresis, plot_displacement
+from .utils import fs_elastoplastic, plot_displacement
 from .free_vibration import free_vibration
 from .forced_vibration import harmonic_vibration
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Abinash Mandal"
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
     "CentralDifference",
     "Interpolation",
     "fs_elastoplastic",
-    "fs_hysteresis",
-    "free_vibration_undamped",
+    "free_vibration",
+    "harmonic_vibration",
     "plot_displacement",
 ]
