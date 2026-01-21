@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
-import requests
-import io
 
 
 def fs_elastoplastic(uy=0.02, fy=36000):
@@ -23,15 +21,14 @@ def fs_elastoplastic(uy=0.02, fy=36000):
 
 def elcentro():
     """Get data from El Centro earthquake"""
-    url = "https://raw.githubusercontent.com/learnstructure/structdyn/main/elcentro_mod.csv"
+    # Read CSV file from local ground_motions folder
+    csv_path = Path(__file__).parent.parent / "ground_motions" / "elcentro_mod.csv"
 
-    # Download the file
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise FileNotFoundError("Could not download elcentro_mod.csv from GitHub.")
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Could not find elcentro_mod.csv at {csv_path}")
 
     # Read CSV data using numpy
-    el_centro = np.genfromtxt(io.StringIO(response.text), delimiter=",")
+    el_centro = np.genfromtxt(csv_path, delimiter=",")
 
     # Extract time steps and acceleration values
     time_steps = el_centro[:, 0]

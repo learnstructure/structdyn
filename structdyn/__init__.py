@@ -5,11 +5,11 @@ Author: Abinash Mandal
 Version: 0.2.0
 """
 
-from .sdf import SDF
-from .numerical_methods import CentralDifference, Interpolation
-from .utils import fs_elastoplastic, plot_displacement, elcentro
-from .free_vibration import free_vibration
-from .forced_vibration import harmonic_vibration
+from .sdf.sdf import SDF
+from .utils.numerical_methods import CentralDifference, Interpolation
+from .utils.utils import fs_elastoplastic, plot_displacement, elcentro
+from .sdf.free_vibration import free_vibration
+from .sdf.forced_vibration import harmonic_vibration
 
 __version__ = "0.2.0"
 __author__ = "Abinash Mandal"
@@ -22,4 +22,5 @@ __all__ = [
     "free_vibration",
     "harmonic_vibration",
     "plot_displacement",
+    "elcentro",
 ]

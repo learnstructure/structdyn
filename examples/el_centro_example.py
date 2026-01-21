@@ -1,4 +1,4 @@
-from structdyn import elcentro
+from structdyn.utils import elcentro
 
 t, f = elcentro()
 print(len(t), len(f))
