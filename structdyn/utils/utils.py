@@ -1,6 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
 
 
 def fs_elastoplastic(uy=0.02, fy=36000):
@@ -21,14 +27,18 @@ def fs_elastoplastic(uy=0.02, fy=36000):
 
 def elcentro():
     """Get data from El Centro earthquake"""
-    # Read CSV file from local ground_motions folder
-    csv_path = Path(__file__).parent.parent / "ground_motions" / "elcentro_mod.csv"
-
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Could not find elcentro_mod.csv at {csv_path}")
-
-    # Read CSV data using numpy
-    el_centro = np.genfromtxt(csv_path, delimiter=",")
+    # Read CSV file using importlib.resources for package data
+    try:
+        # Try using importlib.resources (modern approach)
+        csv_file = files("structdyn").joinpath("ground_motions/elcentro_mod.csv")
+        with csv_file.open('r') as f:
+            el_centro = np.genfromtxt(f, delimiter=",")
+    except (AttributeError, FileNotFoundError, TypeError):
+        # Fallback to Path-based approach for local development
+        csv_path = Path(__file__).parent.parent / "ground_motions" / "elcentro_mod.csv"
+        if not csv_path.exists():
+            raise FileNotFoundError(f"Could not find elcentro_mod.csv at {csv_path}")
+        el_centro = np.genfromtxt(csv_path, delimiter=",")
 
     # Extract time steps and acceleration values
     time_steps = el_centro[:, 0]

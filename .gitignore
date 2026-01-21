@@ -8,6 +8,11 @@ __pycache__/
 venv/
 .env/
 
+# Ignore setuptools build artifacts
+*.egg-info/
+dist/
+build/
+
 # Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
