@@ -27,6 +27,7 @@ displacement_3, velocity_3, fs3 = solver_non_linear.compute_solution(
     time_steps, load_values, fs_elastoplastic()
 )
 
+
 # Print results
 print("Displacement using Interpolation:\n", displacement_1)
 print("Displacement using Central Difference:\n", displacement_2)
