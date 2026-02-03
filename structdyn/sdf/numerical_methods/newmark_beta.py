@@ -1,78 +1,237 @@
 import numpy as np
+import pandas as pd
 
 
-def get_beta_parameters(acc_type="average"):
-    """Get Newmark-Beta method parameters."""
+def get_newmark_parameters(acc_type="average"):
+    """
+    Returns Newmark-beta parameters (beta, gamma).
+
+    Parameters
+    ----------
+    acc_type : str
+        'average' : Constant-average acceleration (unconditionally stable)
+        'linear'  : Linear acceleration
+    """
     if acc_type == "average":
         beta, gamma = 1 / 4, 1 / 2
     elif acc_type == "linear":
         beta, gamma = 1 / 6, 1 / 2
     else:
-        raise ValueError("Invalid acceleration_type. Choose 'average' or 'linear'.")
+        raise ValueError("acc_type must be 'average' or 'linear'")
+
     return beta, gamma
 
 
 class NewmarkBeta:
-    """NewmarkBeta Scheme for Solving Structural Dynamics Numerically"""
+    """
+    Newmark-Beta time integration scheme for linear SDOF systems
+    (based on Chopra, Table 5.4.2).
+    """
 
     def __init__(
         self,
         sdf,
         dt,
-        u_init=0,
-        u_dot_init=0,
-        p_init=0,
-        non_linear=False,
+        u0=0.0,
+        v0=0.0,
         acc_type="average",
     ):
         self.dt = dt
-        self.non_linear = non_linear
-        self.beta, self.gamma = get_beta_parameters(acc_type)
+        self.beta, self.gamma = get_newmark_parameters(acc_type)
 
-        self.k, m, ji, w_n = sdf.k, sdf.m, sdf.ji, sdf.w_n
-        c = 2 * m * w_n * ji  # Damping constant
+        # System properties
+        self.m = sdf.m
+        self.c = sdf.c
+        self.k = sdf.k
 
-        self.u_init, self.u_dot_init = u_init, u_dot_init
-        self.u_dot_init = u_dot_init if u_dot_init is not None else 0
+        # Initial conditions
+        self.u0 = u0
+        self.v0 = v0
 
-        u_dot2_init = (p_init - c * self.u_dot_init - self.k * self.u_init) / m
+        # Precompute Newmark constants
+        self._compute_newmark_constants()
 
-        self.u_minus1 = self.u_init - dt * self.u_dot_init + (u_dot2_init * dt**2) / 2
+    def _compute_newmark_constants(self):
+        """Precompute Newmark integration constants."""
+        dt = self.dt
+        beta = self.beta
+        gamma = self.gamma
 
-        self.a1 = m / (m * dt**2) + c / (2 * dt)
+        self.a1 = self.m / (beta * dt**2) + gamma * self.c / (beta * dt)
+        self.a2 = self.m / (beta * dt) + self.c * (gamma / beta - 1)
+        self.a3 = (1 / (2 * beta) - 1) * self.m + dt * self.c * (gamma / (2 * beta) - 1)
 
-        self.k_bar = m / dt**2 + c / (2 * dt)
+        # Effective stiffness
+        self.k_hat = self.k + self.a1
 
-        self.b = self.k - 2 * m / dt**2
-        self.b_bar = 2 * m / dt**2
+    def compute_solution(self, time_steps, load_values):
+        """
+        Compute displacement, velocity, and acceleration response.
 
-    def compute_solution(self, time_steps, load_values, fs=None):
-        """Computes the displacement, velocity and resisting force of the SDF system."""
-        n_steps = len(time_steps)
-        u, u_dot, p_bar, fs_val = (
-            np.zeros(n_steps),
-            np.zeros(n_steps),
-            np.zeros(n_steps),
-            np.zeros(n_steps),
-        )
+        Parameters
+        ----------
+        time_steps : array-like
+            Time discretization
+        load_values : array-like
+            External force p(t) at each time step
 
-        u[0], u_dot[0], fs_last = self.u_init, self.u_dot_init, 0
+        Returns
+        -------
+        pandas.DataFrame
+            Time history of displacement, velocity, and acceleration
+        """
+        if len(time_steps) != len(load_values):
+            raise ValueError("time_steps and load_values must have the same length")
 
-        for i in range(n_steps - 1):
-            u_prev = self.u_minus1 if i == 0 else u[i - 1]
+        # Initial acceleration from equilibrium at t = 0
+        p0 = load_values[0]
+        a0 = (p0 - self.c * self.v0 - self.k * self.u0) / self.m
 
-            if self.non_linear:
-                fs_val[i] = fs(u[i], u_prev, fs_last)
-                p_bar[i] = (
-                    load_values[i] - self.a * u_prev + self.b_bar * u[i] - fs_val[i]
-                )
-                fs_last = fs_val[i]
+        # Initialize response variables
+        u = self.u0
+        v = self.v0
+        a = a0
+
+        results = {
+            "time": [time_steps[0]],
+            "displacement": [u],
+            "velocity": [v],
+            "acceleration": [a],
+        }
+
+        # Time-stepping loop
+        for i in range(len(time_steps) - 1):
+            p_next = load_values[i + 1]
+
+            # Effective load (Chopra Eq. 2.1)
+            p_hat = p_next + self.a1 * u + self.a2 * v + self.a3 * a
+
+            # Displacement update (Eq. 2.2)
+            u_next = p_hat / self.k_hat
+
+            # Velocity update (Eq. 2.3)
+            v_next = (
+                self.gamma / (self.beta * self.dt) * (u_next - u)
+                + (1 - self.gamma / self.beta) * v
+                + self.dt * (1 - self.gamma / (2 * self.beta)) * a
+            )
+
+            # Acceleration update (Eq. 2.4)
+            a_next = (
+                (u_next - u) / (self.beta * self.dt**2)
+                - v / (self.beta * self.dt)
+                - (1 / (2 * self.beta) - 1) * a
+            )
+
+            # Advance state
+            u, v, a = u_next, v_next, a_next
+
+            results["time"].append(time_steps[i + 1])
+            results["displacement"].append(u)
+            results["velocity"].append(v)
+            results["acceleration"].append(a)
+
+        return pd.DataFrame(results)
+
+    def compute_solution_nonlinear(
+        self,
+        time_steps,
+        load_values,
+        tol=1e-6,
+        max_iter=20,
+    ):
+        """
+        Nonlinear Newmark-Beta method (Chopra Table 5.7.1)
+
+        Requires sdf.get_force_and_tangent(u) -> (fs, kt)
+        """
+
+        if len(time_steps) != len(load_values):
+            raise ValueError("time_steps and load_values must have same length")
+
+        dt = self.dt
+        beta = self.beta
+        gamma = self.gamma
+
+        # --- Initial state determination (Step 1.1) ---
+        u = self.u0
+        v = self.v0
+
+        fs, kt = self.sdf.get_force_and_tangent(u)
+
+        # Initial acceleration (Step 1.2)
+        a = (load_values[0] - self.c * v - fs) / self.m
+
+        results = {
+            "time": [time_steps[0]],
+            "displacement": [u],
+            "velocity": [v],
+            "acceleration": [a],
+        }
+
+        # --- Time stepping loop ---
+        for i in range(len(time_steps) - 1):
+
+            p_next = load_values[i + 1]
+
+            # Step 2.1: Initial guess
+            u_trial = u
+            fs_trial = fs
+            kt_trial = kt
+
+            # Step 2.2: Effective load
+            p_hat = p_next + self.a1 * u + self.a2 * v + self.a3 * a
+
+            # --- Newton-Raphson iteration ---
+            for iteration in range(max_iter):
+
+                # Step 3.1: Residual
+                R_hat = p_hat - fs_trial - self.a1 * u_trial
+
+                # Step 3.2: Convergence check
+                if abs(R_hat) < tol:
+                    break
+
+                # Step 3.3: Effective tangent stiffness
+                k_hat = kt_trial + self.a1
+
+                # Step 3.4: Displacement correction
+                du = R_hat / k_hat
+
+                # Step 3.5: Update displacement
+                u_trial += du
+
+                # Step 3.6: Update internal force and tangent stiffness
+                fs_trial, kt_trial = self.sdf.get_force_and_tangent(u_trial)
+
             else:
-                p_bar[i] = load_values[i] - self.a * u_prev - self.b * u[i]
-                fs_val[i] = self.k * u[i]
+                raise RuntimeError(
+                    f"Newton-Raphson did not converge at time step {i+1}"
+                )
 
-            u[i + 1] = p_bar[i] / self.k_bar
-            u_dot[i] = (u[i + 1] - u_prev) / (2 * self.dt)
+            # Accept converged displacement
+            u_next = u_trial
 
-        fs_val[-1] = fs(u[-1], u[-2], fs_last) if self.non_linear else self.k * u[-1]
-        return u, u_dot, fs_val
+            # --- Step 4: Velocity and acceleration ---
+            v_next = (
+                gamma / (beta * dt) * (u_next - u)
+                + (1 - gamma / beta) * v
+                + dt * (1 - gamma / (2 * beta)) * a
+            )
+
+            a_next = (
+                (u_next - u) / (beta * dt**2)
+                - v / (beta * dt)
+                - (1 / (2 * beta) - 1) * a
+            )
+
+            # Advance state
+            u, v, a = u_next, v_next, a_next
+            fs, kt = fs_trial, kt_trial
+
+            results["time"].append(time_steps[i + 1])
+            results["displacement"].append(u)
+            results["velocity"].append(v)
+            results["acceleration"].append(a)
+
+        return pd.DataFrame(results)

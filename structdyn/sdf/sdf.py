@@ -13,6 +13,7 @@ class SDF:
         self.w_n = np.sqrt(self.k / self.m)  # natural frequency
         self.w_d = self.w_n * np.sqrt(1 - self.ji**2)  # damped natural frequency
         self.t_n = 2 * np.pi / self.w_n  # natural time period
+        self.c = 2 * self.m * self.w_n * self.ji  # damping constant
 
     def find_response(self, time_steps, load_values, method="newmark_beta", **kwargs):
         """Compute the response of the SDF system using the specified numerical method.

@@ -8,6 +8,7 @@ Version: 0.2.0
 from .sdf.sdf import SDF
 from .sdf.numerical_methods.central_difference import CentralDifference
 from .sdf.numerical_methods.interpolation import Interpolation
+from .sdf.numerical_methods.newmark_beta import NewmarkBeta
 from .utils.utils import fs_elastoplastic, plot_displacement, elcentro
 from .sdf.free_vibration import free_vibration
 from .sdf.forced_vibration import harmonic_vibration
@@ -19,6 +20,7 @@ __all__ = [
     "SDF",
     "CentralDifference",
     "Interpolation",
+    "NewmarkBeta",
     "fs_elastoplastic",
     "free_vibration",
     "harmonic_vibration",
