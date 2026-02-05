@@ -54,10 +54,10 @@ class NewmarkBeta:
 
     def compute_solution(self, time_steps, load_values):
         """Wrapper for linear or nonlinear Newmark-Beta solution."""
-        if self.sdf.fd is not None:
-            return self.compute_solution_nonlinear(time_steps, load_values)
-        else:
+        if self.sdf.fd == "linear":
             return self.compute_solution_linear(time_steps, load_values)
+        else:
+            return self.compute_solution_nonlinear(time_steps, load_values)
 
     def _compute_newmark_constants(self):
         """Precompute Newmark integration constants."""

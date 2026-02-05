@@ -17,7 +17,7 @@ class SDF:
         self.t_n = 2 * np.pi / self.w_n  # natural time period
         self.c = 2 * self.m * self.w_n * self.ji  # damping constant
         if fd == "linear":
-            self.fd = None
+            self.fd = "linear"
         elif fd == "elastoplastic":
             self.fd = ElasticPerfectlyPlastic(**fd_params)
         else:
@@ -48,7 +48,7 @@ class SDF:
             )
 
             solver = CentralDifference(self, dt=dt, **kwargs)
-            return solver.compute_solution(time_steps, load_values, fs=fs)
+
         elif method == "interpolation":
             from structdyn.sdf.numerical_methods.interpolation import Interpolation
 
