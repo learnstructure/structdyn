@@ -1,10 +1,12 @@
 import numpy as np
+from structdyn.utils.helpers import ElasticPerfectlyPlastic
 
 
 class SDF:
     """Single Degree of Freedom (SDF) System for Structural Dynamics"""
 
-    def __init__(self, m, k, ji=0):
+    def __init__(self, m, k, ji=0, fd="linear", **fd_params):
+        """Initialize SDF system."""
         self.m = m  # mass in kg
         self.k = k  # stiffness in N/m
         self.ji = ji  # damping ratio
@@ -14,6 +16,12 @@ class SDF:
         self.w_d = self.w_n * np.sqrt(1 - self.ji**2)  # damped natural frequency
         self.t_n = 2 * np.pi / self.w_n  # natural time period
         self.c = 2 * self.m * self.w_n * self.ji  # damping constant
+        if fd == "linear":
+            self.fd = None
+        elif fd == "elastoplastic":
+            self.fd = ElasticPerfectlyPlastic(**fd_params)
+        else:
+            raise ValueError("fd must be 'linear' or 'elastoplastic'")
 
     def find_response(self, time_steps, load_values, method="newmark_beta", **kwargs):
         """Compute the response of the SDF system using the specified numerical method.

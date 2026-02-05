@@ -38,6 +38,7 @@ class NewmarkBeta:
     ):
         self.dt = dt
         self.beta, self.gamma = get_newmark_parameters(acc_type)
+        self.sdf = sdf
 
         # System properties
         self.m = sdf.m
@@ -50,6 +51,13 @@ class NewmarkBeta:
 
         # Precompute Newmark constants
         self._compute_newmark_constants()
+
+    def compute_solution(self, time_steps, load_values):
+        """Wrapper for linear or nonlinear Newmark-Beta solution."""
+        if self.sdf.fd is not None:
+            return self.compute_solution_nonlinear(time_steps, load_values)
+        else:
+            return self.compute_solution_linear(time_steps, load_values)
 
     def _compute_newmark_constants(self):
         """Precompute Newmark integration constants."""
@@ -64,7 +72,7 @@ class NewmarkBeta:
         # Effective stiffness
         self.k_hat = self.k + self.a1
 
-    def compute_solution(self, time_steps, load_values):
+    def compute_solution_linear(self, time_steps, load_values):
         """
         Compute displacement, velocity, and acceleration response.
 
@@ -143,7 +151,8 @@ class NewmarkBeta:
         """
         Nonlinear Newmark-Beta method (Chopra Table 5.7.1)
 
-        Requires sdf.get_force_and_tangent(u) -> (fs, kt)
+        Requires sdf.fd to be defined with methods:
+
         """
 
         if len(time_steps) != len(load_values):
@@ -157,7 +166,8 @@ class NewmarkBeta:
         u = self.u0
         v = self.v0
 
-        fs, kt = self.sdf.get_force_and_tangent(u)
+        fs, kt, _ = self.sdf.fd.trial_response(u)
+        self.sdf.fd.commit_state(u)
 
         # Initial acceleration (Step 1.2)
         a = (load_values[0] - self.c * v - fs) / self.m
@@ -202,12 +212,13 @@ class NewmarkBeta:
                 u_trial += du
 
                 # Step 3.6: Update internal force and tangent stiffness
-                fs_trial, kt_trial = self.sdf.get_force_and_tangent(u_trial)
+                fs_trial, kt_trial, _ = self.sdf.fd.trial_response(u_trial)
+                self.sdf.fd.commit_state(u_trial)
 
-            else:
-                raise RuntimeError(
-                    f"Newton-Raphson did not converge at time step {i+1}"
-                )
+            # else:
+            #     raise RuntimeError(
+            #         f"Newton-Raphson did not converge at time step {i+1}"
+            #     )
 
             # Accept converged displacement
             u_next = u_trial

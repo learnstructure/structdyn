@@ -9,6 +9,37 @@ else:
     from importlib_resources import files
 
 
+class ElasticPerfectlyPlastic:
+    def __init__(self, uy=0.02, fy=36000):
+        self.uy = uy
+        self.fy = fy
+        self.k0 = fy / uy
+
+        # Committed (history) state
+        self.u_p = 0.0
+
+    def trial_response(self, u):
+        """
+        Trial force and tangent stiffness
+        (does NOT modify history)
+        """
+        fs_trial = self.k0 * (u - self.u_p)
+
+        if abs(fs_trial) <= self.fy:
+            return fs_trial, self.k0, False
+        else:
+            return self.fy * np.sign(fs_trial), 0.0, True
+
+    def commit_state(self, u):
+        """
+        Update history AFTER convergence
+        """
+        fs = self.k0 * (u - self.u_p)
+
+        if abs(fs) > self.fy:
+            self.u_p = u - (self.fy / self.k0) * np.sign(fs)
+
+
 def fs_elastoplastic(uy=0.02, fy=36000):
     """Get resisting force for given u.
     uy is Yield deformation and fy is yield force"""
@@ -31,7 +62,7 @@ def elcentro():
     try:
         # Try using importlib.resources (modern approach)
         csv_file = files("structdyn").joinpath("ground_motions/elcentro_mod.csv")
-        with csv_file.open('r') as f:
+        with csv_file.open("r") as f:
             el_centro = np.genfromtxt(f, delimiter=",")
     except (AttributeError, FileNotFoundError, TypeError):
         # Fallback to Path-based approach for local development
