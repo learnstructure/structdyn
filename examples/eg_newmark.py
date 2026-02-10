@@ -19,6 +19,6 @@ sdf = SDF(45594, 18 * 10**5, 0.05, fd="elastoplastic", uy=0.02, fy=36000)
 results = sdf.find_response(
     time_steps,
     load_values,
-    method="newmark_beta",
+    method="newmark_beta",  # acc_type="linear"
 )
 print(results)

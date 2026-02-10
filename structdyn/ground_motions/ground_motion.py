@@ -5,7 +5,7 @@ import re
 
 
 class GroundMotion:
-    """Ground motion acceleration time history"""
+    """Ground motion acceleration time history. (Acceleration in unit of g)"""
 
     def __init__(self, acc_g, dt, name=None, component=None):
         self.acc_g = np.asarray(acc_g)
