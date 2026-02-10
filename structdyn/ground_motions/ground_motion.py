@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import re
+from importlib import resources
 
 
 class GroundMotion:
@@ -26,7 +27,10 @@ class GroundMotion:
     @classmethod
     def from_event(cls, event_name, component, base_dir=None):
         if base_dir is None:
-            base_dir = Path(__file__).resolve().parent
+            with resources.as_file(
+                resources.files("structdyn.ground_motions") / "data"
+            ) as data_dir:
+                base_dir = Path(data_dir)
 
         event_dir = base_dir / event_name
         if not event_dir.exists():

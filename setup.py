@@ -2,11 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="structdyn",
-    version="0.2.0",
+    version="0.3.0",
     packages=find_packages(),
-    package_data={
-        "structdyn": ["ground_motions/*.csv"],
-    },
+    include_package_data=True,
     install_requires=[
         "numpy",
         "matplotlib",

@@ -1,0 +1,1 @@
+recursive-include structdyn/ground_motions/data *.AT2
