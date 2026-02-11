@@ -3,33 +3,93 @@
 `structdyn` is a Python library for solving single-degree-of-freedom (SDF) dynamic problems using numerical methods.
 
 ## Installation
-### Clone the repository:
-git clone https://github.com/learnstructure/structdyn.git 
 
-cd structdyn
+Install the package using pip:
 
-python -m examples.example1 #to see an example quickly
-
-### or install without cloning the repository:
+```bash
 pip install git+https://github.com/learnstructure/structdyn.git
+```
 
-## Custom Usage
+## Usage
+
+Here's a quick example of how to use `structdyn` to solve a simple SDF system:
+
 ```python
 import numpy as np
-from structdyn import SDF, Interpolation, CentralDifference, fs_elastoplastic, fs_hysteresis
+from structdyn.sdf.sdf import SDF
 
-#Define load
+# 1. Define the structure
+m = 45594  # mass (kg)
+k = 18e5  # stiffness (N/m)
+ji = 0.05  # damping ratio
+sdf = SDF(m, k, ji)
+
+# 2. Define the dynamic loading
 dt = 0.1
-time_steps = np.arange(0, 1.01, dt)
-load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
-load_values[time_steps >= 0.6] = 0
+time = np.arange(0, 10.01, dt)
+load = np.zeros_like(time)
+load[time <= 2] = 1000 * np.sin(np.pi * time[time <= 2])
 
-# Define system properties
-sdf = SDF(m=45594, k=18e5, ji=0.05)
+# 3. Solve the equation of motion
+# Available methods: 'newmark_beta', 'central_difference', 'interpolation'
+results = sdf.find_response(time, load, method="newmark_beta")
 
-# Solve using Central Difference Method
-solver = Interpolation(sdf, dt)
-displacement, velocity, fs= solver.compute_solution(time_steps, load_values)
-print("Displacement using Interpolation:\n", displacement)
+# 4. Print the results
+print(results)
+```
+
+## Examples
+
+To run the examples provided in the `examples` directory, clone the repository and run the desired example file:
+
+```bash
+git clone https://github.com/learnstructure/structdyn.git
+cd structdyn
+python -m examples.eg_newmark
+```
+
+### Ground Motion Analysis
+
+`structdyn` can be used to analyze the response of a structure to ground motion. The library includes the El Centro ground motion record, which can be loaded as follows:
+
+```python
+from structdyn.sdf.sdf import SDF
+from structdyn.ground_motions.ground_motion import GroundMotion
+
+# Load the El Centro ground motion record
+gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
+
+# Define an SDF system
+sdf = SDF(45594, 18 * 10**5, 0.05)
+
+# Solve for the response of the SDF system to the ground motion
+results = sdf.find_response_ground_motion(gm, method='central_difference')
+
+# Print the results
+print(results)
+```
+
+### Nonlinear Analysis
+
+`structdyn` supports nonlinear analysis using the `fd` parameter of the `SDF` class. Currently, the only available nonlinear model is the elastic-perfectly plastic model.
+
+```python
+import numpy as np
+from structdyn.sdf.sdf import SDF
+
+# Define an elastic-perfectly plastic SDF system
+sdf_epp = SDF(m=45594, k=18e5, ji=0.05, fd="elastoplastic", f_y=200000)
+
+# Define the dynamic loading
+dt = 0.1
+time = np.arange(0, 10.01, dt)
+load = np.zeros_like(time)
+load[time <= 2] = 1000 * np.sin(np.pi * time[time <= 2])
 
 
+# Solve for the response of the nonlinear system
+results_epp = sdf_epp.find_response(time, load)
+
+# Print the results
+print(results_epp)
+```

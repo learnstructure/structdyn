@@ -13,7 +13,7 @@ from .utils.helpers import fs_elastoplastic, plot_displacement, elcentro
 from .sdf.free_vibration import free_vibration
 from .sdf.forced_vibration import harmonic_vibration
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Abinash Mandal"
 
 __all__ = [
