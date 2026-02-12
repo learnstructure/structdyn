@@ -10,8 +10,8 @@ from .sdf.numerical_methods.central_difference import CentralDifference
 from .sdf.numerical_methods.interpolation import Interpolation
 from .sdf.numerical_methods.newmark_beta import NewmarkBeta
 from .utils.helpers import fs_elastoplastic, plot_displacement, elcentro
-from .sdf.free_vibration import free_vibration
-from .sdf.forced_vibration import harmonic_vibration
+from .sdf.analytical_methods.analytical_response import AnalyticalResponse
+
 
 __version__ = "0.3.0"
 __author__ = "Abinash Mandal"
@@ -22,8 +22,7 @@ __all__ = [
     "Interpolation",
     "NewmarkBeta",
     "fs_elastoplastic",
-    "free_vibration",
-    "harmonic_vibration",
+    "AnalyticalResponse",
     "plot_displacement",
     "elcentro",
 ]

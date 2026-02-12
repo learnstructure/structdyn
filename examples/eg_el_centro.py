@@ -9,7 +9,7 @@ from structdyn.ground_motions.ground_motion import GroundMotion
 
 # gm = GroundMotion.from_event("imperialValley_elCentro_1940", component="hor1")
 p = Path(__file__).resolve().parent.parent
-elc_path = p / "structdyn" / "ground_motions" / "data" / "elcentro_mod.csv"
+elc_path = p / "structdyn" / "ground_motions" / "data" / "elcentro_chopra.csv"
 elc = pd.read_csv(elc_path, header=None)
 
 gm = GroundMotion.from_arrays(elc[1], 0.02)

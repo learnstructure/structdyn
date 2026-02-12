@@ -5,7 +5,7 @@ from structdyn.ground_motions.ground_motion import GroundMotion
 from structdyn.sdf.response_spectrum import ResponseSpectrum
 
 root_path = Path(__file__).resolve().parent.parent
-elc_path = root_path / "structdyn" / "ground_motions" / "data" / "elcentro_mod.csv"
+elc_path = root_path / "structdyn" / "ground_motions" / "data" / "elcentro_chopra.csv"
 elc = pd.read_csv(elc_path, header=None)
 
 gm = GroundMotion.from_arrays(elc[1], 0.02)
