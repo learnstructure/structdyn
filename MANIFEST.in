@@ -1,1 +1,3 @@
 recursive-include structdyn/ground_motions/data *.AT2
+recursive-include structdyn/ground_motions/data *.csv
+

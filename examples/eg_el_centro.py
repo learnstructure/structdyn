@@ -1,17 +1,12 @@
 from structdyn import SDF
-from structdyn import Interpolation, CentralDifference, NewmarkBeta
-from structdyn import fs_elastoplastic
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-from pathlib import Path
 from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.utils.helpers import elcentro_chopra
 
 # gm = GroundMotion.from_event("imperialValley_elCentro_1940", component="hor1")
-p = Path(__file__).resolve().parent.parent
-elc_path = p / "structdyn" / "ground_motions" / "data" / "elcentro_chopra.csv"
-elc = pd.read_csv(elc_path, header=None)
 
+elc = elcentro_chopra()
 gm = GroundMotion.from_arrays(elc[1], 0.02)
 
 m = 1
