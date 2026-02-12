@@ -1,6 +1,6 @@
 # structdyn: Structural Dynamics Solver
 
-`structdyn` is a Python library for solving single-degree-of-freedom (SDF) dynamic problems using numerical methods.
+`structdyn` is a Python library for solving single-degree-of-freedom (SDF)  dynamic problems using numerical methods. Multiple-degree-of-freedom (MDF) systems will be added later.
 
 ## Installation
 
@@ -48,9 +48,43 @@ cd structdyn
 python -m examples.eg_newmark
 ```
 
+### Analytical Methods
+
+`structdyn` can also solve for the response of an SDF system analytically for certain cases.
+
+#### Free Vibration
+
+```python
+from structdyn import SDF
+from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
+
+sdf = SDF(m=1.0, k=100.0, ji=0.05)
+
+analytical = AnalyticalResponse(sdf)
+
+# Free vibration response
+df_free = analytical.free_vibration(u0=0.01, v0=0.0)
+print(df_free)
+```
+
+#### Harmonic Forcing
+
+```python
+from structdyn import SDF
+from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
+
+sdf = SDF(m=1.0, k=100.0, ji=0.05)
+
+analytical = AnalyticalResponse(sdf)
+
+# Harmonic sine forcing response
+df_harm = analytical.harmonic_response(p0=10.0, w=5.0, excitation="sine")
+print(df_harm)
+```
+
 ### Ground Motion Analysis
 
-`structdyn` can be used to analyze the response of a structure to ground motion. The library includes the El Centro ground motion record, which can be loaded as follows:
+`structdyn` can be used to analyze the response of a structure to ground motion. The library includes several ground motion records, which can be loaded as follows:
 
 ```python
 from structdyn.sdf.sdf import SDF
@@ -92,4 +126,29 @@ results_epp = sdf_epp.find_response(time, load)
 
 # Print the results
 print(results_epp)
+```
+
+### Response Spectrum Analysis
+
+`structdyn` can be used to compute the response spectrum of a ground motion.
+
+```python
+import numpy as np
+from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.sdf.response_spectrum import ResponseSpectrum
+
+# Load the El Centro ground motion record
+gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
+
+# Define the periods for which to compute the response spectrum
+periods = np.arange(0, 5.01, 0.1)
+
+# Create a ResponseSpectrum object
+rs = ResponseSpectrum(periods, 0.02, gm)
+
+# Compute the response spectrum
+results = rs.compute()
+
+# Print the results
+print(results)
 ```
