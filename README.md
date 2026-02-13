@@ -1,5 +1,8 @@
 # structdyn: Structural Dynamics Solver
 
+[![Documentation Status](https://readthedocs.org/projects/structdyn/badge/?version=latest)](https://structdyn.readthedocs.io/en/latest/)
+
+
 `structdyn` is a Python library for solving single-degree-of-freedom (SDF)  dynamic problems using numerical methods. Multiple-degree-of-freedom (MDF) systems will be added later.
 
 ## Installation
