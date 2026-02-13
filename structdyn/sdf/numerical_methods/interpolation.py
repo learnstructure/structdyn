@@ -4,11 +4,30 @@ import pandas as pd
 
 class Interpolation:
     """
-    Interpolation (Recurrence) Method for Linear SDOF Systems
-    Chopra Eq. (5.2.5a–b), Table 5.2.1 (ζ < 1)
+    Solves the equation of motion for a linear SDOF system using an exact
+    integration method assuming linear interpolation of the excitation force.
+
+    This method is based on the recurrence formulas derived from the exact solution
+    of the differential equation for a given time step. It is unconditionally stable
+    and highly accurate for linear systems.
+
+    Reference: Chopra, A. K. (2020). Dynamics of Structures: Theory and Applications
+    to Earthquake Engineering. Pearson Education.
+    (See Eq. 5.2.5a-b and Table 5.2.1 for ζ < 1)
     """
 
     def __init__(self, sdf, dt):
+        """
+        Initializes the Interpolation solver and pre-computes recurrence coefficients.
+
+        Parameters
+        ----------
+        sdf : SDF
+            The Single Degree of Freedom system to be analyzed. The system must be
+            linear and underdamped (0 <= ji < 1).
+        dt : float
+            The time step for the numerical integration.
+        """
         self.dt = dt
         self.sdf = sdf
         # System properties
@@ -66,16 +85,28 @@ class Interpolation:
 
     def compute_solution(self, time, p, u0=0.0, v0=0.0):
         """
+        Performs the time-stepping solution using the pre-computed coefficients.
+
         Parameters
         ----------
-        time : array_like
-            Time vector
-        p : array_like
-            External force vector
+        time : array-like
+            An array representing the time vector of the analysis.
+        p : array-like
+            An array representing the external force applied at each time step.
+        u0 : float, optional
+            Initial displacement at time t=0, by default 0.0.
+        v0 : float, optional
+            Initial velocity at time t=0, by default 0.0.
 
         Returns
         -------
         pandas.DataFrame
+            A DataFrame containing the full time history of the response, including:
+            - 'time': Time points.
+            - 'displacement': Displacement at each time point.
+            - 'velocity': Velocity at each time point.
+            - 'acceleration': Acceleration at each time point.
+            - 'resisting_force': Internal resisting force at each time point.
         """
         n = len(time)
 

@@ -5,10 +5,28 @@ from structdyn.sdf.sdf import SDF
 
 class ResponseSpectrum:
     """
-    Linear elastic displacement response spectrum generator.
+    Generates a linear elastic response spectrum for a given ground motion.
+
+    This class calculates the displacement, pseudo-velocity, and pseudo-acceleration
+    response spectra for a range of periods and a specified damping ratio.
     """
 
     def __init__(self, periods, damping_ratio, ground_motion, method="interpolation"):
+        """
+        Initializes the ResponseSpectrum generator.
+
+        Parameters
+        ----------
+        periods : array-like
+            An array of periods (in seconds) for which to compute the response spectrum.
+        damping_ratio : float
+            The damping ratio (ji) for the SDF systems. Must be between 0 and 1.
+        ground_motion : GroundMotion
+            A GroundMotion object representing the input ground motion.
+        method : str, optional
+            The numerical integration method to use for the time history analysis,
+            by default "interpolation".
+        """
         self.periods = np.asarray(periods, dtype=float)
         self.ji = damping_ratio
         self.gm = ground_motion
@@ -21,6 +39,20 @@ class ResponseSpectrum:
             raise ValueError("Periods must be positive")
 
     def compute(self):
+        """
+        Computes the response spectrum.
+
+        This method iterates through the specified periods, creates an SDF system for each,
+        and calculates the peak displacement response to the ground motion. It then
+        computes the pseudo-velocity and pseudo-acceleration spectra.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the response spectrum, with columns for period (T),
+            spectral displacement (Sd), pseudo-spectral velocity (pSv), and
+            pseudo-spectral acceleration in g (pSa (g)).
+        """
         periods = self.periods.copy()
         include_zero = np.any(periods == 0)
         # Remove zero from numerical loop

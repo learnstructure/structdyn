@@ -7,7 +7,7 @@ from structdyn.utils.helpers import elcentro_chopra
 # gm = GroundMotion.from_event("imperialValley_elCentro_1940", component="hor1")
 
 elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc[1], 0.02)
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
 
 m = 1
 ji = 0.02

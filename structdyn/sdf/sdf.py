@@ -7,7 +7,25 @@ class SDF:
     """Single Degree of Freedom (SDF) System for Structural Dynamics"""
 
     def __init__(self, m, k, ji=0, fd="linear", **fd_params):
-        """Initialize SDF system."""
+        """
+        Initializes an SDF system.
+
+        Parameters
+        ----------
+        m : float
+            Mass of the system in kilograms (kg).
+        k : float
+            Stiffness of the system in Newtons per meter (N/m).
+        ji : float, optional
+            Damping ratio (dimensionless), by default 0.
+            Must be between 0 and 1.
+        fd : str, optional
+            Force-deformation model, by default "linear".
+            Can be 'linear' or 'elastoplastic'.
+        **fd_params : dict, optional
+            Additional parameters for the force-deformation model.
+            For 'elastoplastic', this would include 'f_y' (yield force).
+        """
         self.m = m  # mass in kg
         self.k = k  # stiffness in N/m
         self.ji = ji  # damping ratio
@@ -25,19 +43,28 @@ class SDF:
             raise ValueError("fd must be 'linear' or 'elastoplastic'")
 
     def find_response(self, time, load, method="newmark_beta", **kwargs):
-        """Solve m u'' + c u' + f_s(u) = p(t)
-                Parameters
+        """
+        Solves the equation of motion: m u'' + c u' + f_s(u) = p(t).
+
+        Parameters
         ----------
         time : array-like
-            Time discretization
+            Array of time points.
         load : array-like
-            Generalized force history p(t)
-            (for ground motion: p = -m * u_g_ddot)
-        method : str
-            'newmark_beta', 'central_difference', or 'interpolation'
-        kwargs :
-            Additional parameters passed to the numerical scheme
-        ."""
+            Array of generalized force values at each time point.
+        method : str, optional
+            Numerical method to use for solving the equation of motion,
+            by default "newmark_beta".
+            Available methods: 'newmark_beta', 'central_difference', 'interpolation'.
+        **kwargs : dict, optional
+            Additional parameters to be passed to the numerical solver.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the time history of the system's response
+            (e.g., displacement, velocity, acceleration).
+        """
         time = np.asarray(time)
         dt = time[1] - time[0]
         if not np.allclose(np.diff(time), dt):
@@ -51,7 +78,21 @@ class SDF:
 
     def find_response_ground_motion(self, gm, method="newmark_beta", **kwargs):
         """
-        Solve base-excited system using ground motion.
+        Solves the equation of motion for a base-excited system subjected to ground motion.
+
+        Parameters
+        ----------
+        gm : GroundMotion
+            A GroundMotion object representing the ground motion record.
+        method : str, optional
+            Numerical method to use, by default "newmark_beta".
+        **kwargs : dict, optional
+            Additional parameters for the numerical solver.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the time history of the system's response.
         """
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")

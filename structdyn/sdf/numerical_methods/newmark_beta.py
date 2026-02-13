@@ -24,8 +24,16 @@ def get_newmark_parameters(acc_type="average"):
 
 class NewmarkBeta:
     """
-    Newmark-Beta time integration scheme for linear SDOF systems
-    (based on Chopra, Table 5.4.2).
+    Implements the Newmark-Beta time integration scheme for solving the equation
+    of motion for both linear and nonlinear Single Degree of Freedom (SDF) systems.
+
+    This class provides a robust and widely used numerical method for dynamic
+    analysis. It supports both the constant-average-acceleration and the
+    linear-acceleration methods.
+
+    Reference: Chopra, A. K. (2020). Dynamics of Structures: Theory and
+    Applications to Earthquake Engineering. Pearson Education.
+    (See Table 5.4.2 for linear systems and Table 5.7.1 for nonlinear systems)
     """
 
     def __init__(
@@ -36,6 +44,25 @@ class NewmarkBeta:
         v0=0.0,
         acc_type="average",
     ):
+        """
+        Initializes the NewmarkBeta solver.
+
+        Parameters
+        ----------
+        sdf : SDF
+            The Single Degree of Freedom system to be analyzed.
+        dt : float
+            The time step for the numerical integration.
+        u0 : float, optional
+            Initial displacement at time t=0, by default 0.0.
+        v0 : float, optional
+            Initial velocity at time t=0, by default 0.0.
+        acc_type : {"average", "linear"}, optional
+            The assumption for the variation of acceleration over a time step,
+            by default "average".
+            - "average": Constant-average acceleration (unconditionally stable).
+            - "linear": Linear acceleration.
+        """
         self.dt = dt
         self.beta, self.gamma = get_newmark_parameters(acc_type)
         self.sdf = sdf
@@ -53,7 +80,22 @@ class NewmarkBeta:
         self._compute_newmark_constants()
 
     def compute_solution(self, time_steps, load_values):
-        """Wrapper for linear or nonlinear Newmark-Beta solution."""
+        """
+        Computes the dynamic response by dispatching to the appropriate solver
+        based on the system's linearity.
+
+        Parameters
+        ----------
+        time_steps : array-like
+            An array representing the time vector of the analysis.
+        load_values : array-like
+            An array representing the external force applied at each time step.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the time history of the response.
+        """
         if self.sdf.fd == "linear":
             return self.compute_solution_linear(time_steps, load_values)
         else:
@@ -74,19 +116,19 @@ class NewmarkBeta:
 
     def compute_solution_linear(self, time_steps, load_values):
         """
-        Compute displacement, velocity, and acceleration response.
+        Computes the response of a linear system using the Newmark-Beta method.
 
         Parameters
         ----------
         time_steps : array-like
-            Time discretization
+            Time discretization.
         load_values : array-like
-            External force p(t) at each time step
+            External force p(t) at each time step.
 
         Returns
         -------
         pandas.DataFrame
-            Time history of displacement, velocity, and acceleration
+            Time history of displacement, velocity, and acceleration.
         """
         if len(time_steps) != len(load_values):
             raise ValueError("time_steps and load_values must have the same length")
@@ -149,10 +191,31 @@ class NewmarkBeta:
         max_iter=20,
     ):
         """
-        Nonlinear Newmark-Beta method (Chopra Table 5.7.1)
+        Computes the response of a nonlinear system using the Newmark-Beta method
+        with a Newton-Raphson iteration scheme.
 
-        Requires sdf.fd to be defined with methods:
+        Parameters
+        ----------
+        time_steps : array-like
+            Time discretization.
+        load_values : array-like
+            External force p(t) at each time step.
+        tol : float, optional
+            Tolerance for the convergence of the Newton-Raphson iteration,
+            by default 1e-6.
+        max_iter : int, optional
+            Maximum number of iterations for the Newton-Raphson algorithm,
+            by default 20.
 
+        Returns
+        -------
+        pandas.DataFrame
+            Time history of displacement, velocity, and acceleration.
+
+        Raises
+        -------
+        RuntimeError
+            If the Newton-Raphson iteration fails to converge.
         """
 
         if len(time_steps) != len(load_values):

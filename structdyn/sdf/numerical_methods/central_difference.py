@@ -4,11 +4,28 @@ import pandas as pd
 
 class CentralDifference:
     """
-    Central Difference Method for linear and nonlinear SDOF systems
-    (Chopra Table 5.3.1 and Section 5.6)
+    Implements the Central Difference Method for solving the equation of motion.
+
+    This method is an explicit time-stepping algorithm suitable for both linear and
+    nonlinear Single Degree of Freedom (SDF) systems. It is conditionally stable
+    and requires the time step `dt` to be smaller than a critical value.
     """
 
     def __init__(self, sdf, dt, u0=0.0, v0=0.0):
+        """
+        Initializes the Central Difference solver.
+
+        Parameters
+        ----------
+        sdf : SDF
+            The Single Degree of Freedom system to be analyzed.
+        dt : float
+            The time step for the numerical integration.
+        u0 : float, optional
+            Initial displacement at time t=0, by default 0.0.
+        v0 : float, optional
+            Initial velocity at time t=0, by default 0.0.
+        """
         self.sdf = sdf
         self.dt = dt
 
@@ -26,6 +43,29 @@ class CentralDifference:
         self.b_bar = 2 * self.m / dt**2
 
     def compute_solution(self, time, p):
+        """
+        Executes the time-stepping solution.
+
+        This method iterates through the time vector, calculating the displacement,
+        velocity, and acceleration of the system at each step.
+
+        Parameters
+        ----------
+        time : array-like
+            An array representing the time vector of the analysis.
+        p : array-like
+            An array representing the external force applied at each time step.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the full time history of the response, including:
+            - 'time': Time points.
+            - 'displacement': Displacement at each time point.
+            - 'velocity': Velocity at each time point.
+            - 'acceleration': Acceleration at each time point.
+            - 'resisting_force': Internal resisting force at each time point.
+        """
         n = len(time)
         dt = self.dt
 

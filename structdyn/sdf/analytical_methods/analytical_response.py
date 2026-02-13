@@ -4,14 +4,22 @@ import pandas as pd
 
 class AnalyticalResponse:
     """
-    Analytical solutions for an existing SDF system.
+    Provides analytical solutions for the dynamic response of an SDF system.
 
-    Supports:
-    - Free vibration (underdamped)
-    - Harmonic excitation (sine & cosine)
+    This class is applicable to underdamped linear systems (0 <= ji < 1).
+    It supports calculations for free vibration and harmonic (sine or cosine) excitation.
     """
 
     def __init__(self, sdf):
+        """
+        Initializes the AnalyticalResponse solver.
+
+        Parameters
+        ----------
+        sdf : SDF
+            An instance of the SDF class representing the system to be analyzed.
+            The system must be underdamped (0 <= ji < 1).
+        """
         self.sdf = sdf
 
         self.m = sdf.m
@@ -31,6 +39,25 @@ class AnalyticalResponse:
     # 1️⃣ Free Vibration (Underdamped)
     # ---------------------------------------------------------
     def free_vibration(self, u0, v0=0, time=None):
+        """
+        Calculates the free vibration response of the underdamped system.
+
+        Parameters
+        ----------
+        u0 : float
+            Initial displacement at time t=0.
+        v0 : float, optional
+            Initial velocity at time t=0, by default 0.
+        time : array-like, optional
+            The time vector for the analysis. If None, a default time vector is
+            generated covering 10 natural periods.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the time history of the response, with columns:
+            'time', 'displacement', 'velocity', and 'acceleration'.
+        """
         if time is None:
             time = np.arange(0, 10 * self.t_n, self.t_n / 100)
         t = np.asarray(time)
@@ -58,7 +85,31 @@ class AnalyticalResponse:
     # ---------------------------------------------------------
     def harmonic_response(self, p0, w, u0=0.0, v0=0.0, time=None, excitation="sine"):
         """
-        excitation: "sine" or "cosine"
+        Calculates the response to a harmonic forcing function p(t).
+
+        The forcing function can be either p(t) = p0 * sin(ωt) or p(t) = p0 * cos(ωt).
+
+        Parameters
+        ----------
+        p0 : float
+            Amplitude of the harmonic force.
+        w : float
+            Frequency of the harmonic force in radians per second.
+        u0 : float, optional
+            Initial displacement at time t=0, by default 0.0.
+        v0 : float, optional
+            Initial velocity at time t=0, by default 0.0.
+        time : array-like, optional
+            The time vector for the analysis. If None, a default time vector is
+            generated covering 10 natural periods.
+        excitation : {"sine", "cosine"}, optional
+            Type of the harmonic excitation, by default "sine".
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the time history of the response, with columns:
+            'time', 'displacement', 'velocity', and 'acceleration'.
         """
         if time is None:
             time = np.arange(0, 10 * self.t_n, self.t_n / 100)

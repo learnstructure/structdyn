@@ -6,9 +6,40 @@ from importlib import resources
 
 
 class GroundMotion:
-    """Ground motion acceleration time history. (Acceleration in unit of g)"""
+    """Represents a ground motion acceleration time history.
+
+    This class provides a container for ground motion data, typically acceleration
+    time histories. It includes methods for reading data from common file formats
+    (like AT2), scaling the motion, and accessing its properties.
+
+    Attributes
+    ----------
+    acc_g : numpy.ndarray
+        The acceleration time history in units of g (acceleration due to gravity).
+    dt : float
+        The time step of the acceleration data.
+    time : numpy.ndarray
+        The time vector corresponding to the acceleration data.
+    name : str, optional
+        A name for the ground motion event.
+    component : str, optional
+        The component of the ground motion (e.g., 'h1', 'h2', 'v').
+    """
 
     def __init__(self, acc_g, dt, name=None, component=None):
+        """Initializes the GroundMotion object.
+
+        Parameters
+        ----------
+        acc_g : array-like
+            Acceleration time history in units of g.
+        dt : float
+            Time step of the acceleration data.
+        name : str, optional
+            Name of the ground motion event, by default None.
+        component : str, optional
+            Component of the ground motion, by default None.
+        """
         self.acc_g = np.asarray(acc_g)
         self.dt = float(dt)
         self.time = np.arange(len(acc_g)) * dt
@@ -20,12 +51,46 @@ class GroundMotion:
 
     @classmethod
     def from_at2(cls, file_path):
+        """Creates a GroundMotion object from a PEER NGA (AT2) file.
+
+        Parameters
+        ----------
+        file_path : str or pathlib.Path
+            The path to the .AT2 file.
+
+        Returns
+        -------
+        GroundMotion
+            A new GroundMotion instance with data from the file.
+        """
         file_path = Path(file_path)
         acc, dt = cls._read_at2(file_path)
         return cls(acc, dt, name=file_path.stem)
 
     @classmethod
     def from_event(cls, event_name, component, base_dir=None):
+        """Loads a ground motion from the built-in event database.
+
+        Parameters
+        ----------
+        event_name : str
+            The name of the earthquake event (e.g., 'elcentro', 'northridge').
+        component : str
+            The specific component to load (e.g., 'h1', 'h2', 'v').
+        base_dir : str or pathlib.Path, optional
+            The base directory of the ground motion data. If None, it uses the
+            package's default data directory.
+
+        Returns
+        -------
+        GroundMotion
+            A new GroundMotion instance for the specified event and component.
+
+        Raises
+        -------
+        FileNotFoundError
+            If the specified event or component is not found.
+        """
         if base_dir is None:
             with resources.as_file(
                 resources.files("structdyn.ground_motions") / "data"
@@ -47,6 +112,22 @@ class GroundMotion:
 
     @classmethod
     def from_arrays(cls, acc_g, dt, name="user_motion"):
+        """Creates a GroundMotion object directly from arrays.
+
+        Parameters
+        ----------
+        acc_g : array-like
+            Acceleration time history in units of g.
+        dt : float
+            Time step of the acceleration data.
+        name : str, optional
+            A name for the motion, by default "user_motion".
+
+        Returns
+        -------
+        GroundMotion
+            A new GroundMotion instance.
+        """
         return cls(acc_g, dt, name=name)
 
     # ---------- Utilities ----------
