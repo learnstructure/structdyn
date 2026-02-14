@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg import eigh
-from .modal_analysis import ModalAnalysis
+from .analytical_methods.modal_analysis import ModalAnalysis
 
 
 class MDF:
@@ -118,7 +118,7 @@ class MDF:
         stiffnesses : list or array
             Story stiffness values (length n) from bottom to top
         """
-        from .builders import _shear_building_logic
+        from .mdf_helpers.builders import _shear_building_logic
 
         M, K = _shear_building_logic(masses, stiffnesses)
         return cls(M, K)
