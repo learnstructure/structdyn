@@ -122,3 +122,20 @@ class MDF:
 
         M, K = _shear_building_logic(masses, stiffnesses)
         return cls(M, K)
+
+    def find_response(self, time, load, method="central_difference"):
+        from structdyn.mdf.numerical_methods.central_difference import (
+            CentralDifferenceMDF,
+        )
+        from structdyn.mdf.numerical_methods.newmark_beta import NewmarkBetaMDF
+
+        time = np.asarray(time)
+        dt = time[1] - time[0]
+        if not np.allclose(np.diff(time), dt):
+            raise ValueError("Time vector must be uniformly spaced")
+
+        solver_class = (
+            NewmarkBetaMDF if method == "newmark_beta" else CentralDifferenceMDF
+        )
+        solver = solver_class(self, dt)
+        return solver.compute_solution(time, load)

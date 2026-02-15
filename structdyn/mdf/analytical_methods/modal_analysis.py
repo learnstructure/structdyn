@@ -1,5 +1,6 @@
 from scipy.linalg import eigh
 import numpy as np
+import pandas as pd
 from structdyn.sdf.sdf import SDF
 from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
 
@@ -81,7 +82,7 @@ class ModalAnalysis:
         self.get_Mn_Cn_Kn()
         if time is None:
             time = np.arange(0, 10, 0.01)
-        time = np.asarray(time)
+        time = np.asarray(time, dtype=float)
         nt = len(time)
         ndof = self.mdf.ndof
         u = np.zeros((ndof, nt))
@@ -94,6 +95,15 @@ class ModalAnalysis:
 
             qn_t = (analytical.free_vibration(qn0, qn0_dot, time))[
                 ["displacement"]
-            ].values
+            ].values.flatten()  # shape (nt,)
+
             u += np.outer(phi_n, qn_t)
-        return u
+
+        u = u.T  # transpose to (nt, ndof)
+        # build dataframe
+        columns = ["time"] + [f"u{i+1}" for i in range(ndof)]
+        data = np.column_stack((time, u))
+
+        df = pd.DataFrame(data, columns=columns)
+
+        return df
