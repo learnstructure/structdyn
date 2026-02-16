@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.linalg import eigh
 from .analytical_methods.modal_analysis import ModalAnalysis
+from structdyn.ground_motions import GroundMotion
 
 
 class MDF:
@@ -49,63 +49,30 @@ class MDF:
         if self.C.shape != self.M.shape:
             raise ValueError("C must have same dimensions as M.")
 
-    # -------------------------------------------------
-    # Rayleigh Damping
-    # -------------------------------------------------
+    def set_modal_damping(self, zeta, n_modes=None):
+        omega, phi = self.modal.modal_analysis(n_modes=n_modes)
 
-    # def set_rayleigh_damping(self, zeta1, zeta2, mode1=0, mode2=1):
-    #     """
-    #     Compute Rayleigh damping matrix:
-    #         C = α M + β K
+        zeta = np.asarray(zeta, dtype=float)
 
-    #     Using two target damping ratios.
-    #     """
+        n_modes = phi.shape[1]
 
-    #     if self._omega is None:
-    #         self.modal_analysis()
+        if len(zeta) != n_modes:
+            raise ValueError("Length of zeta must equal number of modes used.")
+        C = np.zeros_like(self.M)
 
-    #     w1 = self._omega[mode1]
-    #     w2 = self._omega[mode2]
-
-    #     A = np.array([[1 / (2 * w1), w1 / 2], [1 / (2 * w2), w2 / 2]])
-
-    #     b = np.array([zeta1, zeta2])
-
-    #     alpha, beta = np.linalg.solve(A, b)
-
-    #     self.C = alpha * self.M + beta * self.K
-
-    #     return alpha, beta
-
-    # # -------------------------------------------------
-    # # Participation Factors
-    # # -------------------------------------------------
-
-    # def participation_factors(self):
-    #     """
-    #     Compute modal participation factors Γ_r
-    #     for base excitation (assuming influence vector = 1).
-    #     """
-
-    #     if self._phi is None:
-    #         self.mass_normalize_modes()
-
-    #     ones = np.ones(self.ndof)
-
-    #     gamma = []
-
-    #     for i in range(self.ndof):
-    #         phi_r = self._phi[:, i]
-    #         num = phi_r.T @ self.M @ ones
-    #         den = phi_r.T @ self.M @ phi_r
-    #         gamma.append(num / den)
-
-    #     return np.array(gamma)
+        for i in range(n_modes):
+            phi_i = phi[:, i].reshape(-1, 1)
+            # Modal mass
+            Mn = phi_i.T @ self.M @ phi_i
+            coeff = 2 * zeta[i] * omega[i] / Mn
+            # Modal contribution
+            C += coeff * (self.M @ phi_i @ phi_i.T @ self.M)
+        self.C = C
+        return self.C
 
     # -------------------------------------------------
     # Shear Building Constructor
     # -------------------------------------------------
-
     @classmethod
     def from_shear_building(cls, masses, stiffnesses):
         """
@@ -134,8 +101,30 @@ class MDF:
         if not np.allclose(np.diff(time), dt):
             raise ValueError("Time vector must be uniformly spaced")
 
-        solver_class = (
-            NewmarkBetaMDF if method == "newmark_beta" else CentralDifferenceMDF
-        )
+        if method == "newmark_beta":
+            solver_class = NewmarkBetaMDF
+        elif method == "central_difference":
+            solver_class = CentralDifferenceMDF
+        else:
+            raise ValueError("method must be 'central_difference' or 'newmark_beta'")
+
         solver = solver_class(self, dt)
         return solver.compute_solution(time, load)
+
+    def find_response_ground_motion(
+        self, gm, inf_vec=None, method="central_difference"
+    ):
+        if not isinstance(gm, GroundMotion):
+            raise TypeError("gm must be a GroundMotion object")
+        time = np.asarray(gm.time)
+        ag = np.asarray(gm.acc_g) * 9.81  # convert to m/s²
+        if inf_vec is None:
+            inf_vec = np.ones(self.ndof)
+        inf_vec = np.asarray(inf_vec)
+        if inf_vec.shape != (self.ndof,):
+            raise ValueError("inf_vec must have shape (ndof,)")
+
+        # Compute effective inertia vector M r
+        Mr = self.M @ inf_vec
+        load = -ag[:, None] * Mr[None, :]
+        return self.find_response(time, load, method=method)
