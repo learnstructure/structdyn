@@ -8,7 +8,7 @@ stiffness = [2 * 18 * 10**5, 18 * 10**5]
 mdf = MDF.from_shear_building(masses, stiffness)
 
 # Define external load
-dt = 0.1
+dt = 0.01
 time = np.arange(0, 1.01, dt)
 load = 50 * np.sin(np.pi * time / 0.6) * 1000
 load[time >= 0.6] = 0

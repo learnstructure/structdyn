@@ -1,12 +1,10 @@
 from structdyn import SDF
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
 
+# Create SDF object
 sdf = SDF(m=1.0, k=100.0, ji=0.05)
-
-analytical = AnalyticalResponse(sdf)
+analytical = AnalyticalResponse(sdf)  # analytical solver
 
 # Free vibration
 df_free = analytical.free_vibration(u0=0.01, v0=0.0)

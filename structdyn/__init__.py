@@ -2,7 +2,7 @@
 structdyn: A Python library for solving structural dynamics problems numerically.
 
 Author: Abinash Mandal
-Version: 0.3.0
+
 """
 
 from .sdf.sdf import SDF
