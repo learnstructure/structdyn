@@ -5,22 +5,33 @@ from structdyn.ground_motions import GroundMotion
 
 class MDF:
     """
-    Linear Multi-Degree-of-Freedom (MDF) System
+    Represents a linear Multi-Degree-of-Freedom (MDF) system.
 
-    Governing equation:
-        M ü + C u̇ + K u = f(t)
+    This class defines a structural system with multiple degrees of freedom governed by the second-order linear differential equation:
+
+    M ü + C u̇ + K u = f(t)
+
+    where:
+    - M is the mass matrix
+    - C is the damping matrix
+    - K is the stiffness matrix
+    - u is the displacement vector
+    - f(t) is the external force vector
 
     Parameters
     ----------
-    M : (n, n) ndarray
-        Mass matrix
-    K : (n, n) ndarray
-        Stiffness matrix
-    C : (n, n) ndarray, optional
-        Damping matrix (default: zero matrix)
+    M : (n, n) array-like
+        The mass matrix of the system.
+    K : (n, n) array-like
+        The stiffness matrix of the system.
+    C : (n, n) array-like, optional
+        The damping matrix. If not provided, it is initialized as a zero matrix.
     """
 
     def __init__(self, M, K, C=None):
+        """
+        Initializes the MDF system with mass, stiffness, and optional damping matrices.
+        """
         self.M = np.asarray(M, dtype=float)
         self.K = np.asarray(K, dtype=float)
 
@@ -50,6 +61,30 @@ class MDF:
             raise ValueError("C must have same dimensions as M.")
 
     def set_modal_damping(self, zeta, n_modes=None):
+        """
+        Sets the damping matrix C based on modal damping ratios (Rayleigh damping).
+
+        This method constructs a classical damping matrix C using the natural frequencies
+        and mode shapes of the undamped system.
+
+        Parameters
+        ----------
+        zeta : array-like
+            An array or list of modal damping ratios for the modes to be included.
+        n_modes : int, optional
+            The number of modes to use for constructing the damping matrix.
+            If None, all modes are used. The default is None.
+
+        Returns
+        -------
+        C : ndarray
+            The resulting (n, n) damping matrix.
+
+        Raises
+        ------
+        ValueError
+            If the length of `zeta` does not match the number of modes specified.
+        """
         omega, phi = self.modal.modal_analysis(n_modes=n_modes)
 
         zeta = np.asarray(zeta, dtype=float)
@@ -76,14 +111,20 @@ class MDF:
     @classmethod
     def from_shear_building(cls, masses, stiffnesses):
         """
-        Create an MDOF shear building model.
+        Creates an MDF system representing a shear building model.
 
         Parameters
         ----------
         masses : list or array
-            Lumped masses at each floor from bottom to top
+            A list of lumped masses at each floor, starting from the bottom floor.
         stiffnesses : list or array
-            Story stiffness values (length n) from bottom to top
+            A list of story stiffnesses, starting from the bottom story.
+            The length must be equal to the number of masses.
+
+        Returns
+        -------
+        MDF
+            A new MDF instance representing the shear building.
         """
         from .mdf_helpers.builders import _shear_building_logic
 
@@ -91,6 +132,28 @@ class MDF:
         return cls(M, K)
 
     def find_response(self, time, load, method="central_difference", **kwargs):
+        """
+        Computes the dynamic response of the system to an external force.
+
+        Parameters
+        ----------
+        time : array-like
+            A uniformly spaced time vector.
+        load : (nt, ndof) ndarray
+            The external force history, where `nt` is the number of time steps
+            and `ndof` is the number of degrees of freedom.
+        method : str, optional
+            The numerical integration method to use.
+            Options are 'central_difference' or 'newmark_beta'.
+            The default is "central_difference".
+        **kwargs :
+            Additional keyword arguments to be passed to the numerical solver.
+
+        Returns
+        -------
+        DataFrame
+            A pandas DataFrame containing the displacement, velocity, and acceleration response history.
+        """
         from structdyn.mdf.numerical_methods.central_difference import (
             CentralDifferenceMDF,
         )
@@ -114,6 +177,29 @@ class MDF:
     def find_response_ground_motion(
         self, gm, inf_vec=None, method="central_difference", **kwargs
     ):
+        """
+        Computes the dynamic response of the system to ground motion.
+
+        Parameters
+        ----------
+        gm : GroundMotion
+            A GroundMotion object containing the ground acceleration history.
+        inf_vec : array-like, optional
+            The influence vector, which relates the ground motion to the degrees of freedom.
+            If None, it is assumed to be a vector of ones (all DOFs are equally affected).
+            The default is None.
+        method : str, optional
+            The numerical integration method to use.
+            Options are 'central_difference' or 'newmark_beta'.
+            The default is "central_difference".
+        **kwargs :
+            Additional keyword arguments to be passed to the numerical solver.
+
+        Returns
+        -------
+        DataFrame
+            A pandas DataFrame containing the displacement, velocity, and acceleration response history.
+        """
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
         time = np.asarray(gm.time)

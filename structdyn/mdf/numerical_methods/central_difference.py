@@ -5,21 +5,38 @@ from scipy.linalg import lu_factor, lu_solve
 
 class CentralDifferenceMDF:
     """
-    Central difference time integrator for linear MDOF systems.
-    Can operate in physical coordinates or in modal coordinates (using pre‑computed mode shapes).
+    Solves the equation of motion for a linear MDOF system using the Central Difference method.
+
+    This class implements the explicit, conditionally stable Central Difference time integration
+    algorithm. The integration can be performed either in the physical coordinates of the system
+    or in modal coordinates, which can be more efficient for systems where the response is
+    dominated by a few modes.
     """
 
     def __init__(self, mdf, dt, u0=None, v0=None, use_modal=False, n_modes=None):
         """
+        Initializes the CentralDifferenceMDF solver.
+
         Parameters
         ----------
-        mdf : object
-            Must have attributes .M, .C, .K (dense matrices) and .ndof.
-            If modal data is present, it should be in .modal.omega and .modal.phi.
+        mdf : MDF
+            An instance of the MDF class, representing the system to be analyzed.
+            It must have .M, .C, .K attributes and a .modal attribute with .phi if using modal coordinates.
         dt : float
-            Time step.
-        u0, v0 : array_like, optional
-            Initial displacement and velocity. If None, zero vectors are used.
+            The time step for the integration. The method is conditionally stable, and the time step
+            must be smaller than a critical value (dt_crit = T_n / pi, where T_n is the smallest natural period).
+        u0 : array-like, optional
+            The initial displacement vector of shape (ndof,). If None, it is assumed to be zero.
+            The default is None.
+        v0 : array-like, optional
+            The initial velocity vector of shape (ndof,). If None, it is assumed to be zero.
+            The default is None.
+        use_modal : bool, optional
+            If True, the integration is performed in modal coordinates. This requires the `mdf` object
+            to have its mode shapes computed. The default is False.
+        n_modes : int, optional
+            The number of modes to use for modal integration. If None, all available modes are used.
+            This parameter is only active when `use_modal` is True. The default is None.
         """
         self.mdf = mdf
         self.dt = dt
@@ -37,24 +54,29 @@ class CentralDifferenceMDF:
 
     def compute_solution(self, time, P):
         """
-        Integrate the equations of motion.
+        Integrates the equations of motion over the given time and force history.
 
         Parameters
         ----------
-        time : array_like (nt,)
-            Discrete time instants.
-        P : array_like (nt, ndof)
-            External force history at each time instant.
-        use_modal : bool, optional
-            If True, perform integration in modal coordinates using pre‑computed mode shapes.
-            Requires that self.mdf.modal.phi exists.
-        n_modes : int, optional
-            Number of modes to retain (only if use_modal=True). If None, all available modes are used.
+        time : array-like
+            An array of time points of shape (nt,).
+        P : array-like
+            The external force history as an array of shape (nt, ndof).
 
         Returns
         -------
         pd.DataFrame
-            Columns: 'time', u1..uN, v1..vN, a1..aN.
+            A DataFrame containing the response history. The columns include:
+            - 'time': The time points.
+            - 'u1', 'u2', ...: Displacement for each degree of freedom.
+            - 'v1', 'v2', ...: Velocity for each degree of freedom.
+            - 'a1', 'a2', ...: Acceleration for each degree of freedom.
+
+        Raises
+        ------
+        ValueError
+            If the shape of the force array `P` is not compatible with the time vector and the number of DOFs.
+            If `use_modal` is True and the requested number of modes exceeds the available modes.
         """
         time = np.asarray(time, dtype=float)
         P = np.asarray(P, dtype=float)

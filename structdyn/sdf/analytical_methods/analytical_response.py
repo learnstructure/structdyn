@@ -4,10 +4,12 @@ import pandas as pd
 
 class AnalyticalResponse:
     """
-    Provides analytical solutions for the dynamic response of an SDF system.
+    Provides analytical solutions for the dynamic response of a linear SDF system.
 
     This class is applicable to underdamped linear systems (0 <= ji < 1).
-    It supports calculations for free vibration and harmonic (sine or cosine) excitation.
+    It serves as a tool for verification against numerical methods and for solving
+    classical problems with known closed-form solutions, such as free vibration
+    and harmonic (sine or cosine) excitation.
     """
 
     def __init__(self, sdf):
@@ -49,13 +51,13 @@ class AnalyticalResponse:
         v0 : float, optional
             Initial velocity at time t=0, by default 0.
         time : array-like, optional
-            The time vector for the analysis. If None, a default time vector is
-            generated covering 10 natural periods.
+            The time vector for the analysis. If None, a default vector is
+            generated covering 10 natural periods with 100 steps per period.
 
         Returns
         -------
         pandas.DataFrame
-            A DataFrame containing the time history of the response, with columns:
+            A DataFrame with the time history of the response, including columns:
             'time', 'displacement', 'velocity', and 'acceleration'.
         """
         if time is None:
@@ -87,7 +89,7 @@ class AnalyticalResponse:
         """
         Calculates the response to a harmonic forcing function p(t).
 
-        The forcing function can be either p(t) = p0 * sin(ωt) or p(t) = p0 * cos(ωt).
+        The forcing function can be either p(t) = p0 * sin(wt) or p(t) = p0 * cos(wt).
 
         Parameters
         ----------
@@ -100,7 +102,7 @@ class AnalyticalResponse:
         v0 : float, optional
             Initial velocity at time t=0, by default 0.0.
         time : array-like, optional
-            The time vector for the analysis. If None, a default time vector is
+            The time vector for the analysis. If None, a default vector is
             generated covering 10 natural periods.
         excitation : {"sine", "cosine"}, optional
             Type of the harmonic excitation, by default "sine".
@@ -108,7 +110,7 @@ class AnalyticalResponse:
         Returns
         -------
         pandas.DataFrame
-            A DataFrame containing the time history of the response, with columns:
+            A DataFrame with the time history of the response, including columns:
             'time', 'displacement', 'velocity', and 'acceleration'.
         """
         if time is None:

@@ -11,7 +11,7 @@ SDF
 
 
 Analytical Response
-------------------
+--------------------
 
 .. automodule:: structdyn.sdf.analytical_methods.analytical_response
    :members:
@@ -48,7 +48,7 @@ Interpolation
    :show-inheritance:
 
 Ground Motion
-------------
+--------------
 
 .. automodule:: structdyn.ground_motions.ground_motion
    :members:
@@ -57,9 +57,26 @@ Ground Motion
 
 
 Response Spectrum
-----------------
+------------------
 
 .. automodule:: structdyn.sdf.response_spectrum
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+MDF
+----
+
+.. automodule:: structdyn.mdf.mdf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Modal Analysis
+--------------
+
+.. automodule:: structdyn.mdf.analytical_methods.modal_analysis
    :members:
    :undoc-members:
    :show-inheritance:

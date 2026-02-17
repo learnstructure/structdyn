@@ -1,9 +1,31 @@
-# structdyn: Structural Dynamics Solver
+# Structural Dynamics Library (`structdyn`)
+
+A Python library for structural dynamics analysis.
 
 [![Documentation Status](https://readthedocs.org/projects/structdyn/badge/?version=latest)](https://structdyn.readthedocs.io/en/latest/)
 
+## Features
 
-`structdyn` is a Python library for solving single-degree-of-freedom (SDF)  dynamic problems using numerical methods. Multiple-degree-of-freedom (MDF) systems will be added later.
+*   **Single-Degree-of-Freedom (SDF) Systems:**
+    *   Define linear and nonlinear SDF systems.
+    *   Analyze free and forced vibrations.
+    *   Calculate responses using analytical and numerical methods.
+*   **Multi-Degree-of-Freedom (MDF) Systems:**
+    *   Define MDF systems with custom mass and stiffness matrices.
+    *   Perform modal analysis to determine natural frequencies and mode shapes.
+    *   Analyze the dynamic response using modal superposition.
+*   **Ground Motion Analysis:**
+    *   Load and scale ground motion records.
+    *   Generate response spectra.
+    *   Analyze the response of structures to earthquake excitations.
+*   **Numerical Methods:**
+    *   A suite of numerical solvers, including:
+        *   Central Difference Method
+        *   Newmark-Beta Method
+        *   Linear Interpolation Method
+*   **Material Models:**
+    *   Elastic-perfectly plastic material model for nonlinear analysis.
+
 
 ## Installation
 
@@ -48,7 +70,8 @@ To run the examples provided in the `examples` directory, clone the repository a
 ```bash
 git clone https://github.com/learnstructure/structdyn.git
 cd structdyn
-python -m examples.eg_newmark
+pip install -e .
+python -m examples.sdf.eg_newmark
 ```
 
 ### Analytical Methods
@@ -155,3 +178,22 @@ results = rs.compute()
 # Print the results
 print(results)
 ```
+
+## Running Tests
+
+To run the tests, you will need to install `pytest`. You can then run the tests from the root directory of the project:
+
+```bash
+pip install pytest
+pytest
+```
+
+## Contributing
+
+Contributions are welcome! If you would like to contribute to the project, please follow these steps:
+
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Make your changes and add tests.
+4.  Run the tests to ensure that everything is working correctly.
+5.  Submit a pull request.

@@ -14,6 +14,13 @@ def get_newmark_parameters(acc_type="linear"):
 
 
 class NewmarkBetaMDF:
+    """
+    Solves the equation of motion for a linear MDOF system using the Newmark-beta method.
+
+    This class implements the implicit, unconditionally stable Newmark-beta time integration
+    algorithm. The integration can be performed either in the physical coordinates of the system
+    or in modal coordinates.
+    """
 
     def __init__(
         self,
@@ -25,6 +32,28 @@ class NewmarkBetaMDF:
         use_modal=False,
         n_modes=None,
     ):
+        """
+        Initializes the NewmarkBetaMDF solver.
+
+        Parameters
+        ----------
+        mdf : MDF
+            An instance of the MDF class, representing the system to be analyzed.
+        dt : float
+            The time step for the integration.
+        u0 : array-like, optional
+            The initial displacement vector of shape (ndof,). Defaults to a zero vector.
+        v0 : array-like, optional
+            The initial velocity vector of shape (ndof,). Defaults to a zero vector.
+        acc_type : str, optional
+            The assumed acceleration variation ('average' or 'linear'). Defaults to "linear".
+        use_modal : bool, optional
+            If True, integration is performed in modal coordinates. Requires pre-computed mode shapes.
+            Defaults to False.
+        n_modes : int, optional
+            The number of modes to use for modal integration. Active only if `use_modal` is True.
+            Defaults to all available modes.
+        """
 
         self.mdf = mdf
         self.dt = dt
@@ -67,24 +96,27 @@ class NewmarkBetaMDF:
     # ------------------------------------------------------------
     def compute_solution(self, time, P):
         """
-        Integrate the equations of motion using Newmark's method.
+        Integrates the equations of motion over the given time and force history.
 
         Parameters
         ----------
-        time : array_like (nt,)
-            Discrete time instants.
-        P : array_like (nt, ndof)
-            External force history at each time instant.
-        use_modal : bool, optional
-            If True, perform integration in modal coordinates using pre‑computed mode shapes.
-            Requires that self.mdf.modal.phi exists.
-        n_modes : int, optional
-            Number of modes to retain (only if use_modal=True). If None, all available modes are used.
+        time : array-like
+            An array of time points of shape (nt,).
+        P : array-like
+            The external force history as an array of shape (nt, ndof).
 
         Returns
         -------
         pd.DataFrame
-            Columns: 'time', u1..uN, v1..vN, a1..aN.
+            A DataFrame with the response history, including columns for 'time',
+            displacements ('u1', 'u2', ...), velocities ('v1', 'v2', ...), and
+            accelerations ('a1', 'a2', ...).
+
+        Raises
+        ------
+        ValueError
+            If `P` has an incorrect shape or if `use_modal` is True and the number
+            of requested modes exceeds the available modes.
         """
         time = np.asarray(time, dtype=float)
         P = np.asarray(P, dtype=float)

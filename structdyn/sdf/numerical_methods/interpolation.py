@@ -13,7 +13,7 @@ class Interpolation:
 
     Reference: Chopra, A. K. (2020). Dynamics of Structures: Theory and Applications
     to Earthquake Engineering. Pearson Education.
-    (See Eq. 5.2.5a-b and Table 5.2.1 for ζ < 1)
+    (See Eq. 5.2.5a-b and Table 5.2.1 for ji < 1)
     """
 
     def __init__(self, sdf, dt):

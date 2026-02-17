@@ -39,8 +39,25 @@ class ElasticPerfectlyPlastic:
 
     def trial_response(self, u):
         """
-        Trial force and tangent stiffness
-        (does NOT modify history)
+        Calculate the trial force and tangent stiffness for a given displacement.
+
+        This method computes the resisting force and stiffness based on a trial
+        displacement `u` without updating the model's history. This is a key
+        step in iterative solution strategies like the Newton-Raphson method.
+
+        Parameters
+        ----------
+        u : float
+            The trial displacement.
+
+        Returns
+        -------
+        fs_trial : float
+            The trial resisting force.
+        kt_trial : float
+            The trial tangent stiffness.
+        is_yielding : bool
+            True if the trial state is in the plastic region, False otherwise.
         """
         fs_trial = self.k0 * (u - self.u_p)
 
@@ -51,28 +68,21 @@ class ElasticPerfectlyPlastic:
 
     def commit_state(self, u):
         """
-        Update history AFTER convergence
+        Update the plastic deformation history after a solution has converged.
+
+        Once an iterative solution for a time step is complete and a final
+        displacement `u` is accepted, this method updates the accumulated
+        plastic deformation `u_p`.
+
+        Parameters
+        ----------
+        u : float
+            The converged displacement for the current step.
         """
         fs = self.k0 * (u - self.u_p)
 
         if abs(fs) > self.fy:
             self.u_p = u - (self.fy / self.k0) * np.sign(fs)
-
-
-# def fs_elastoplastic(uy=0.02, fy=36000):
-#     """Get resisting force for given u.
-#     uy is Yield deformation and fy is yield force"""
-
-#     def get_fs_elastoplastic(
-#         u,
-#         u_last,
-#         fs_last=0,
-#     ):
-#         fs = fs_last + fy / uy * (u - u_last)
-#         fs = fs if abs(fs) < fy else fy if fs > fy else -fy
-#         return fs
-
-#     return get_fs_elastoplastic
 
 
 def elcentro_chopra(header=0):
@@ -100,6 +110,18 @@ def elcentro_chopra(header=0):
 
 
 def plot_displacement(time_steps, displacement, text=None):
+    """
+    Plots the displacement time history.
+
+    Parameters
+    ----------
+    time_steps : array-like
+        The time vector.
+    displacement : array-like
+        The displacement time history.
+    text : str, optional
+        The title of the plot, by default None.
+    """
     plt.plot(time_steps, displacement, marker=".")
     plt.xlabel("Time (s)")
     plt.ylabel("Displacement")

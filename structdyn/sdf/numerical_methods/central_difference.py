@@ -4,11 +4,11 @@ import pandas as pd
 
 class CentralDifference:
     """
-    Implements the Central Difference Method for solving the equation of motion.
+    Implements the Central Difference Method for solving the equation of motion for an SDF system.
 
     This method is an explicit time-stepping algorithm suitable for both linear and
     nonlinear Single Degree of Freedom (SDF) systems. It is conditionally stable
-    and requires the time step `dt` to be smaller than a critical value.
+    and requires the time step `dt` to be smaller than a critical value (dt_crit = T_n / pi).
     """
 
     def __init__(self, sdf, dt, u0=0.0, v0=0.0):

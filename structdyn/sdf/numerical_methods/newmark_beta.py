@@ -59,9 +59,9 @@ class NewmarkBeta:
             Initial velocity at time t=0, by default 0.0.
         acc_type : {"average", "linear"}, optional
             The assumption for the variation of acceleration over a time step,
-            by default "average".
+            by default "linear".
             - "average": Constant-average acceleration (unconditionally stable).
-            - "linear": Linear acceleration.
+            - "linear": Linear acceleration (unconditionally stable).
         """
         self.dt = dt
         self.beta, self.gamma = get_newmark_parameters(acc_type)

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Mandal"
+    given-names: "Abinash"
+    orcid: "https://orcid.org/0009-0000-4234-0861"
+title: "structdyn: A Python library for structural dynamics analysis"
+version: 0.5.0
+date-released: 2026-02-25
+repository-code: "https://github.com/learnstructure/structdyn.git"
+license: MIT
+keywords:
+  - "structural dynamics"
+  - "earthquake engineering"
+  - "numerical integration"
+  - "civil engineering"
+  - "mechanical engineering"
+  - "python"

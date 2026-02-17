@@ -44,6 +44,8 @@ class SDF:
 
     def find_response(self, time, load, method="newmark_beta", **kwargs):
         """
+        Computes the dynamic response of the SDF system.
+
         Solves the equation of motion: m u'' + c u' + f_s(u) = p(t).
 
         Parameters
@@ -53,11 +55,10 @@ class SDF:
         load : array-like
             Array of generalized force values at each time point.
         method : str, optional
-            Numerical method to use for solving the equation of motion,
-            by default "newmark_beta".
+            Numerical method for solving the equation of motion, by default "newmark_beta".
             Available methods: 'newmark_beta', 'central_difference', 'interpolation'.
         **kwargs : dict, optional
-            Additional parameters to be passed to the numerical solver.
+            Additional parameters for the numerical solver.
 
         Returns
         -------
@@ -78,6 +79,8 @@ class SDF:
 
     def find_response_ground_motion(self, gm, method="newmark_beta", **kwargs):
         """
+        Computes the response of the SDF system to ground motion.
+
         Solves the equation of motion for a base-excited system subjected to ground motion.
 
         Parameters
