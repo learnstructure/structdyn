@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def get_newmark_parameters(acc_type="average"):
+def get_newmark_parameters(acc_type="linear"):
     """
     Returns Newmark-beta parameters (beta, gamma).
 
@@ -42,7 +42,7 @@ class NewmarkBeta:
         dt,
         u0=0.0,
         v0=0.0,
-        acc_type="average",
+        acc_type="linear",
     ):
         """
         Initializes the NewmarkBeta solver.

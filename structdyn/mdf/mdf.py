@@ -90,7 +90,7 @@ class MDF:
         M, K = _shear_building_logic(masses, stiffnesses)
         return cls(M, K)
 
-    def find_response(self, time, load, method="central_difference"):
+    def find_response(self, time, load, method="central_difference", **kwargs):
         from structdyn.mdf.numerical_methods.central_difference import (
             CentralDifferenceMDF,
         )
@@ -108,11 +108,11 @@ class MDF:
         else:
             raise ValueError("method must be 'central_difference' or 'newmark_beta'")
 
-        solver = solver_class(self, dt)
+        solver = solver_class(self, dt, **kwargs)
         return solver.compute_solution(time, load)
 
     def find_response_ground_motion(
-        self, gm, inf_vec=None, method="central_difference"
+        self, gm, inf_vec=None, method="central_difference", **kwargs
     ):
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
@@ -127,4 +127,4 @@ class MDF:
         # Compute effective inertia vector M r
         Mr = self.M @ inf_vec
         load = -ag[:, None] * Mr[None, :]
-        return self.find_response(time, load, method=method)
+        return self.find_response(time, load, method=method, **kwargs)
