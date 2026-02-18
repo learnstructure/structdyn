@@ -7,12 +7,6 @@ import pandas as pd
 class ElasticPerfectlyPlastic:
     """
     Represents an elastic-perfectly plastic force-deformation model.
-
-    This class models a material that behaves elastically until it reaches a
-    specified yield force, after which it deforms plastically with no increase
-    in force. It is commonly used in nonlinear structural analysis to represent
-    the behavior of ductile components.
-
     The model tracks the plastic deformation to correctly represent the unloading
     and reloading paths.
     """
@@ -42,8 +36,7 @@ class ElasticPerfectlyPlastic:
         Calculate the trial force and tangent stiffness for a given displacement.
 
         This method computes the resisting force and stiffness based on a trial
-        displacement `u` without updating the model's history. This is a key
-        step in iterative solution strategies like the Newton-Raphson method.
+        displacement `u` without updating the model's history.
 
         Parameters
         ----------
@@ -69,10 +62,6 @@ class ElasticPerfectlyPlastic:
     def commit_state(self, u):
         """
         Update the plastic deformation history after a solution has converged.
-
-        Once an iterative solution for a time step is complete and a final
-        displacement `u` is accepted, this method updates the accumulated
-        plastic deformation `u_p`.
 
         Parameters
         ----------

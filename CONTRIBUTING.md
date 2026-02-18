@@ -1,41 +1,82 @@
 # Contributing to StructDyn
 
-We love welcoming new contributors to StructDyn! Whether you're reporting a bug, suggesting a new feature, or writing code, your help is valued. This document outlines how to contribute.
+First off, thank you for considering contributing to StructDyn! Your help is greatly appreciated. This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
-All participants in this project are expected to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please read it to understand the standards of behavior we expect.
+All participants in this project are expected to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please read it before participating.
+
+## Setting Up Your Development Environment
+
+To ensure a consistent development experience, we recommend using a virtual environment.
+
+1.  **Fork and clone the repository:**
+    ```bash
+    git clone https://github.com/learnstructure/structdyn.git
+    cd structdyn
+    ```
+
+2.  **Create and activate a virtual environment:**
+    ```bash
+    # For macOS and Linux
+    python3 -m venv venv
+    source venv/bin/activate
+
+    # For Windows
+    python -m venv venv
+    .\venv\Scripts\activate
+    ```
+
+3.  **Install dependencies:**
+    Install the project in editable mode (`-e`) along with the development and testing tools.
+    ```bash
+    pip install -e .
+    pip install pytest flake8
+    ```
 
 ## How Can I Contribute?
 
+There are many ways to contribute, from writing code to reporting bugs.
+
 ### Reporting Bugs
 
-If you find a bug, please open an issue on our GitHub repository. A good bug report should include:
+If you encounter a bug, please open an issue on GitHub. A helpful bug report includes:
 
-*   **A clear title:** "Bug: Newmark-Beta solver fails with zero damping."
-*   **Your environment:** Python version, operating system.
-*   **Steps to reproduce:** Provide a minimal code snippet that demonstrates the bug. This is crucial for us to be able to fix it.
-*   **What you expected to happen:** Describe what the output should have been.
-*   **What actually happened:** Include any error messages or incorrect results.
+- **A clear and descriptive title** – e.g., “Bug: Newmark‑Beta solver fails with zero damping”
+- **Your environment** – Python version, operating system, and relevant package versions (`numpy`, `scipy`, etc.)
+- **A minimal, reproducible code example**
+- **The expected behaviour** and **what actually happened** (including error messages or incorrect results)
 
 ### Suggesting Enhancements
 
-If you have an idea for a new feature or an improvement to an existing one, please open an issue to start a discussion. This allows us to coordinate efforts and ensure the suggestion fits with the project's goals.
+Have an idea for a new feature or an improvement? Open an issue to discuss it first. This helps avoid duplication of effort and ensures the suggestion aligns with the project’s scope.
 
 ### Your First Code Contribution
 
-Unsure where to begin? Look for issues tagged with "good first issue" or "help wanted." These are tasks that we've identified as being good entry points for new contributors.
+If you're looking for a place to start, check out issues labelled **“good first issue”** or **“help wanted”**.
 
-### Pull Request Process
+## Pull Request Process
 
-1.  **Fork the repository:** Create your own copy of the project on GitHub.
-2.  **Create a new branch:** `git checkout -b feature/my-new-feature` or `bugfix/fix-that-bug`.
-3.  **Make your changes:** Write your code and add or update docstrings as needed.
-4.  **Add tests:** If you've added new functionality, please add tests to the `tests/` directory to ensure it works correctly and prevent future regressions.
-5.  **Run the tests:** Ensure that the entire test suite passes by running `pytest` (or your chosen test runner) from the root directory.
-6.  **Format your code:** Ensure your code adheres to standard Python style guides (e.g., PEP 8).
-7.  **Commit your changes:** Use a clear and descriptive commit message.
-8.  **Push to your branch:** `git push origin feature/my-new-feature`.
-9.  **Open a pull request:** Go to the main StructDyn repository and open a pull request from your forked repository's branch. Provide a clear description of the changes you have made.
+1.  **Set up your environment** as described above.
+2.  **Create a new branch** for your work: `git checkout -b feature/my-new-feature` or `bugfix/fix-that-bug`.
+3.  **Make your changes.** Write your code and add or update docstrings as needed.
+4.  **Add tests.** If you've added new functionality, please add tests to the `tests/` directory to ensure it works correctly and prevent future regressions.
+5.  **Check code style and run tests.** Before committing, ensure your code is well-formatted and that all tests pass.
+    ```bash
+    # Check code style with flake8
+    flake8 .
+
+    # Run the test suite with pytest
+    pytest
+    ```
+6.  **Commit your changes.** Use a clear and descriptive commit message.
+7.  **Push to your branch:** `git push origin feature/my-new-feature`.
+8.  **Open a pull request.** Go to the main StructDyn repository and open a pull request from your forked repository's branch. Provide a clear description of the changes you have made, referencing any relevant issues.
+
+## Licensing of Contributions
+
+By contributing to StructDyn, you agree that your contributions will be licensed under its [MIT License](LICENSE).
+
+---
 
 Thank you for contributing to our project!

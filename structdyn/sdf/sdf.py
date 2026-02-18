@@ -24,10 +24,10 @@ class SDF:
             Can be 'linear' or 'elastoplastic'.
         **fd_params : dict, optional
             Additional parameters for the force-deformation model.
-            For 'elastoplastic', this would include 'f_y' (yield force).
+            For 'elastoplastic', this would include 'uy' (yield displacement) and 'fy' (yield force).
         """
-        self.m = m  # mass in kg
-        self.k = k  # stiffness in N/m
+        self.m = m  # mass
+        self.k = k  # stiffness
         self.ji = ji  # damping ratio
         if not (0 <= ji < 1):
             raise ValueError("Damping ratio must be between 0 and 1")
@@ -70,7 +70,6 @@ class SDF:
         dt = time[1] - time[0]
         if not np.allclose(np.diff(time), dt):
             raise ValueError("Time vector must be uniformly spaced")
-        # fs = kwargs.pop("fs", None)
 
         solver_class = self._get_solver_class(method)
         solver = solver_class(self, dt=dt, **kwargs)
