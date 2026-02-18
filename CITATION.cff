@@ -4,9 +4,9 @@ authors:
   - family-names: "Mandal"
     given-names: "Abinash"
     orcid: "https://orcid.org/0009-0000-4234-0861"
-title: "structdyn: A Python library for structural dynamics analysis"
-version: 0.5.0
-date-released: 2026-02-25
+title: "StructDyn: An open-source Python library for structural dynamics analysis"
+version: 0.5.1
+date-released: 2026-02
 repository-code: "https://github.com/learnstructure/structdyn.git"
 license: MIT
 keywords:

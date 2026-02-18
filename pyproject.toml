@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "structdyn"
-version = "0.5.0"
+version = "0.5.1"
 description = "StructDyn: An open-source Python library for structural dynamics analysis"
 authors = [
     { name="Abinash Mandal", email="abinashmandal33486@gmail.com" }
