@@ -4,6 +4,27 @@ A Python library for structural dynamics analysis.
 
 [![Documentation Status](https://readthedocs.org/projects/structdyn/badge/?version=latest)](https://structdyn.readthedocs.io/en/latest/)
 
+
+## Citing `structdyn`
+
+If you use `structdyn` in your research or work, please cite it as follows:
+
+> Mandal, A. (2026). structdyn: A Python library for structural dynamics analysis (Version 0.5.0) [Computer software]. https://github.com/learnstructure/structdyn.git
+
+Here is the citation in BibTeX format:
+
+```bibtex
+@software{Mandal_structdyn_2026,
+  author = {Mandal, Abinash},
+  title = {{structdyn: A Python library for structural dynamics analysis}},
+  version = {0.5.0},
+  year = {2026},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/learnstructure/structdyn.git}
+}
+```
+
 ## Features
 
 *   **Single-Degree-of-Freedom (SDF) Systems:**

@@ -68,15 +68,15 @@ class GroundMotion:
         return cls(acc, dt, name=file_path.stem)
 
     @classmethod
-    def from_event(cls, event_name, component, base_dir=None):
+    def from_event(cls, event_name, component="hor1", base_dir=None):
         """Loads a ground motion from the built-in event database.
 
         Parameters
         ----------
         event_name : str
-            The name of the earthquake event (e.g., 'elcentro', 'northridge').
+            The name of the earthquake event. Currently available are (e.g., 'imperialValley_elCentro_1940', 'lomaPrieta_corralitos_1989', 'northridge_sylmar_1994', 'sanFernando_pacoidaDam_1971' ).
         component : str
-            The specific component to load (e.g., 'h1', 'h2', 'v').
+            The specific component to load (e.g., 'hor1', 'hor2', 'up').
         base_dir : str or pathlib.Path, optional
             The base directory of the ground motion data. If None, it uses the
             package's default data directory.
