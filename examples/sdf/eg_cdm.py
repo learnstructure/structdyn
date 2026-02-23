@@ -11,7 +11,6 @@ load_values[time_steps >= 0.6] = 0
 
 # Create SDF object
 sdf = SDF(45594, 18 * 10**5, 0.05)
-# sdf = SDF(45594, 18 * 10**5, 0.05, fd="elastoplastic", uy=0.02, fy=36000)     #for non-linear analysis
 
 # Analysis
 responses = sdf.find_response(

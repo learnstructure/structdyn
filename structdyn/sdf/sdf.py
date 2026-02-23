@@ -1,12 +1,12 @@
 import numpy as np
-from structdyn.utils.helpers import ElasticPerfectlyPlastic
+from structdyn.utils.material_models import LinearElastic
 from structdyn.ground_motions import GroundMotion
 
 
 class SDF:
     """Single Degree of Freedom (SDF) System for Structural Dynamics"""
 
-    def __init__(self, m, k, ji=0, fd="linear", **fd_params):
+    def __init__(self, m, k, ji=0, fd=None):
         """
         Initializes an SDF system.
 
@@ -19,12 +19,8 @@ class SDF:
         ji : float, optional
             Damping ratio (dimensionless), by default 0.
             Must be between 0 and 1.
-        fd : str, optional
-            Force-deformation model, by default "linear".
-            Can be 'linear' or 'elastoplastic'.
-        **fd_params : dict, optional
-            Additional parameters for the force-deformation model.
-            For 'elastoplastic', this would include 'uy' (yield displacement) and 'fy' (yield force).
+        fd : MaterialModel class, optional
+            Force-deformation model, by default "LinearElastic".
         """
         self.m = m  # mass
         self.k = k  # stiffness
@@ -35,12 +31,10 @@ class SDF:
         self.w_d = self.w_n * np.sqrt(1 - self.ji**2)  # damped natural frequency
         self.t_n = 2 * np.pi / self.w_n  # natural time period
         self.c = 2 * self.m * self.w_n * self.ji  # damping constant
-        if fd == "linear":
+        if fd is None or fd == "linear":
             self.fd = "linear"
-        elif fd == "elastoplastic":
-            self.fd = ElasticPerfectlyPlastic(**fd_params)
         else:
-            raise ValueError("fd must be 'linear' or 'elastoplastic'")
+            self.fd = fd
 
     def find_response(self, time, load, method="newmark_beta", **kwargs):
         """

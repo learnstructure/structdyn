@@ -9,6 +9,7 @@ from structdyn import SDF
 from structdyn.ground_motions.ground_motion import GroundMotion
 from structdyn.sdf.response_spectrum import ResponseSpectrum
 from structdyn.utils.helpers import elcentro_chopra
+from structdyn.utils.material_models import ElasticPerfectlyPlastic
 
 
 def test_sdf_initialization():
@@ -85,7 +86,8 @@ def test_example_5_5_newmark_average_nonlinear():
     load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
     load_values[time_steps >= 0.6] = 0
 
-    sdf = SDF(45594, 18 * 10**5, 0.05, fd="elastoplastic", uy=0.02, fy=36000)
+    material_model = ElasticPerfectlyPlastic(uy=0.02, fy=36000)
+    sdf = SDF(45594, 18 * 10**5, 0.05, fd=material_model)
     responses = sdf.find_response(
         time_steps, load_values, method="newmark_beta", acc_type="average"
     )

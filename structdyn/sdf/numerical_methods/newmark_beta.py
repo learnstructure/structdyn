@@ -188,7 +188,7 @@ class NewmarkBeta:
         time_steps,
         load_values,
         tol=1e-6,
-        max_iter=20,
+        max_iter=50,
     ):
         """
         Computes the response of a nonlinear system using the Newmark-Beta method
@@ -229,7 +229,7 @@ class NewmarkBeta:
         u = self.u0
         v = self.v0
 
-        fs, kt, _ = self.sdf.fd.trial_response(u)
+        fs, kt, _ = self.sdf.fd.trial_response(u, v, dt)
         self.sdf.fd.commit_state(u)
 
         # Initial acceleration (Step 1.2)
@@ -255,6 +255,7 @@ class NewmarkBeta:
             # Step 2.2: Effective load
             p_hat = p_next + self.a1 * u + self.a2 * v + self.a3 * a
 
+            converged = False
             # --- Newton-Raphson iteration ---
             for iteration in range(max_iter):
 
@@ -263,6 +264,7 @@ class NewmarkBeta:
 
                 # Step 3.2: Convergence check
                 if abs(R_hat) < tol:
+                    converged = True
                     break
 
                 # Step 3.3: Effective tangent stiffness
@@ -275,13 +277,18 @@ class NewmarkBeta:
                 u_trial += du
 
                 # Step 3.6: Update internal force and tangent stiffness
-                fs_trial, kt_trial, _ = self.sdf.fd.trial_response(u_trial)
-                self.sdf.fd.commit_state(u_trial)
+                v_trial = (
+                    gamma / (beta * dt) * (u_trial - u)
+                    + (1 - gamma / beta) * v
+                    + dt * (1 - gamma / (2 * beta)) * a
+                )
+                fs_trial, kt_trial, _ = self.sdf.fd.trial_response(u_trial, v_trial, dt)
 
-            # else:
-            #     raise RuntimeError(
-            #         f"Newton-Raphson did not converge at time step {i+1}"
-            #     )
+            if not converged:
+                raise RuntimeError(
+                    f"Newton‑Raphson did not converge at time step {i+1}"
+                )
+            self.sdf.fd.commit_state(u_trial)
 
             # Accept converged displacement
             u_next = u_trial

@@ -9,15 +9,15 @@ A Python library for structural dynamics analysis.
 
 If you use `structdyn` in your research or work, please cite it as follows:
 
-> Mandal, A. (2026). structdyn: A Python library for structural dynamics analysis (Version 0.5.0) [Computer software]. https://github.com/learnstructure/structdyn.git
+> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis. (Version 0.5.1) [Computer software]. https://github.com/learnstructure/structdyn.git
 
-Here is the citation in BibTeX format:
+Here is the citation in BibTeX format: 
 
 ```bibtex
 @software{Mandal_structdyn_2026,
   author = {Mandal, Abinash},
-  title = {{structdyn: A Python library for structural dynamics analysis}},
-  version = {0.5.0},
+  title = {{StructDyn: An open-source Python library for structural dynamics analysis.}},
+  version = {0.5.1},
   year = {2026},
   publisher = {GitHub},
   journal = {GitHub repository},

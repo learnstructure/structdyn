@@ -83,6 +83,9 @@ class CentralDifference:
         # u_{-1}
         u_minus1 = u[0] - dt * v[0] + 0.5 * dt**2 * acc[0]
 
+        if self.sdf.fd != "linear":
+            self.sdf.fd._u_prev = u_minus1
+
         for i in range(n - 1):
             u_prev = u_minus1 if i == 0 else u[i - 1]
 
@@ -90,8 +93,8 @@ class CentralDifference:
                 fs_i = self.k * u[i]
                 p_hat = p[i] - self.a * u_prev - self.b * u[i]
             else:
-                fs_i, _, _ = self.sdf.fd.trial_response(u[i])
-                self.sdf.fd.commit_state(u[i])
+                fs_i, _, _ = self.sdf.fd.get_state(u[i], dt)
+                # self.sdf.fd.commit_state(u[i])
                 p_hat = p[i] - self.a * u_prev + self.b_bar * u[i] - fs_i
 
             fs_hist[i] = fs_i
@@ -106,7 +109,7 @@ class CentralDifference:
         fs_hist[-1] = (
             self.k * u[-1]
             if self.sdf.fd == "linear"
-            else self.sdf.fd.trial_response(u[-1])[0]
+            else self.sdf.fd.get_state(u[-1], dt)[0]
         )
 
         v[-1] = (u[-1] - u[-2]) / dt
