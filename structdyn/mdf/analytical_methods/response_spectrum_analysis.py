@@ -7,6 +7,8 @@ class ResponseSpectrumAnalysis:
         self.ji = ji
         if n_modes is None:
             self.n_modes = mdf.ndof
+        else:
+            self.n_modes = n_modes
         omega, phi = self.mdf.modal.modal_analysis(n_modes=self.n_modes)
         self.omega = omega
         self.phi = phi
@@ -65,7 +67,7 @@ class ResponseSpectrumAnalysis:
         lambda_list = []
         for i in range(self.n_modes):
             Mn = self.phi[:, i].T @ self.mdf.M @ self.phi[:, i]
-            lambda_ = (self.phi[:, i].T @ self.mdf.M @ np.ones(self.n_modes)) / Mn
+            lambda_ = (self.phi[:, i].T @ self.mdf.M @ np.ones(self.mdf.ndof)) / Mn
             lambda_list.append(lambda_)
         return np.array(lambda_list)
 

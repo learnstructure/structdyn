@@ -28,7 +28,7 @@ class MDF:
         The damping matrix. If not provided, it is initialized as a zero matrix.
     """
 
-    def __init__(self, M, K, C=None):
+    def __init__(self, M, K, C=None, elements=None):
         """
         Initializes the MDF system with mass, stiffness, and optional damping matrices.
         """
@@ -39,6 +39,8 @@ class MDF:
             self.C = np.zeros_like(self.M)
         else:
             self.C = np.asarray(C, dtype=float)
+
+        self.elements = elements  # list of Element objects (None means linear)
 
         self.ndof = self.M.shape[0]
 
@@ -131,7 +133,9 @@ class MDF:
         M, K = _shear_building_logic(masses, stiffnesses)
         return cls(M, K)
 
-    def find_response(self, time, load, method="central_difference", **kwargs):
+    def find_response(
+        self, time, load, method="central_difference", elements=None, **kwargs
+    ):
         """
         Computes the dynamic response of the system to an external force.
 
@@ -164,10 +168,26 @@ class MDF:
         if not np.allclose(np.diff(time), dt):
             raise ValueError("Time vector must be uniformly spaced")
 
+        if elements is not None:
+            self.elements = elements
+
+        # Determine solver class based on method and nonlinearity
         if method == "newmark_beta":
-            solver_class = NewmarkBetaMDF
+            if self.elements is not None:
+                from structdyn.mdf.numerical_methods.newmark_beta_non_linear import (
+                    NewmarkBetaNonLinear,
+                )
+
+                solver_class = NewmarkBetaNonLinear
+            else:
+                solver_class = NewmarkBetaMDF
         elif method == "central_difference":
-            solver_class = CentralDifferenceMDF
+            if self.elements is not None:
+                raise NotImplementedError(
+                    "Central difference nonlinear solver not yet implemented"
+                )
+            else:
+                solver_class = CentralDifferenceMDF
         else:
             raise ValueError("method must be 'central_difference' or 'newmark_beta'")
 
@@ -214,3 +234,31 @@ class MDF:
         Mr = self.M @ inf_vec
         load = -ag[:, None] * Mr[None, :]
         return self.find_response(time, load, method=method, **kwargs)
+
+    def assemble_resisting_force_and_tangent(self, u, v, dt):
+        Fs = np.zeros(self.ndof)
+        Kt = np.zeros((self.ndof, self.ndof))
+        for elem in self.elements:
+            fe, ke = elem.get_force_and_stiffness(u, v, dt)
+            dofs = elem.dofs
+            if len(dofs) == 1:
+                # Base story
+                Fs[dofs[0]] += fe
+                Kt[dofs[0], dofs[0]] += ke
+            elif len(dofs) == 2:
+                # Interior story
+                i, j = dofs
+                Fs[i] -= fe
+                Fs[j] += fe
+                Kt[i, i] += ke
+                Kt[i, j] -= ke
+                Kt[j, i] -= ke
+                Kt[j, j] += ke
+            else:
+                raise ValueError("Element must have 1 or 2 DOFs")
+        return Fs, Kt
+
+    def commit_elements(self, u):
+        if self.elements is not None:
+            for elem in self.elements:
+                elem.commit(u)

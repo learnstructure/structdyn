@@ -17,10 +17,12 @@ stiffness = np.ones(5) * 54.82e5  # stiffness of each floor in N/m
 mdf = MDF.from_shear_building(masses, stiffness)
 
 # Perform response spectrum analysis
-# rsa = ResponseSpectrumAnalysis(mdf, ji=0.05, gm=gm)   #Use this method to compute spectral displacements from the ground motion
 rsa = ResponseSpectrumAnalysis(
-    mdf, ji=0.05, Sd=[0.13649, 0.06557, 0.03823, 0.02227, 0.01657]
-)  # Using specified spectral displacements
+    mdf, ji=0.05, gm=gm
+)  # Use this method to compute spectral displacements from the ground motion
+# rsa = ResponseSpectrumAnalysis(
+#     mdf, ji=0.05, Sd=[0.13649, 0.06557, 0.03823, 0.02227, 0.01657]
+# )  # Using specified spectral displacements
 # print("Natural Frequencies (rad/s):", rsa.omega)
 # print("Mode shapes:", rsa.phi)
 # print("Modal Participation Factors:", rsa.lambda_)
