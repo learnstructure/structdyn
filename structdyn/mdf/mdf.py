@@ -81,11 +81,6 @@ class MDF:
         -------
         C : ndarray
             The resulting (n, n) damping matrix.
-
-        Raises
-        ------
-        ValueError
-            If the length of `zeta` does not match the number of modes specified.
         """
         omega, phi = self.modal.modal_analysis(n_modes=n_modes)
 
@@ -236,6 +231,30 @@ class MDF:
         return self.find_response(time, load, method=method, **kwargs)
 
     def assemble_resisting_force_and_tangent(self, u, v, dt):
+        """
+        Assembles the global resisting force and tangent stiffness matrix.
+
+        This method is called by a non-linear solver at each iteration within
+        a time step. It iterates through all elements defined in `self.elements`,
+        gets their trial force and stiffness, and assembles them into the
+        global resisting force vector `Fs` and tangent stiffness matrix `Kt`.
+
+        Parameters
+        ----------
+        u : np.ndarray
+            The trial displacement vector for the current iteration.
+        v : np.ndarray
+            The trial velocity vector for the current iteration.
+        dt : float
+            The time step size.
+
+        Returns
+        -------
+        Fs : np.ndarray
+            The global internal resisting force vector.
+        Kt : np.ndarray
+            The global tangent stiffness matrix.
+        """
         Fs = np.zeros(self.ndof)
         Kt = np.zeros((self.ndof, self.ndof))
         for elem in self.elements:
@@ -259,6 +278,19 @@ class MDF:
         return Fs, Kt
 
     def commit_elements(self, u):
+        """
+        Commits the state of all non-linear elements.
+
+        This method is called by a non-linear solver at the end of a converged
+        time step. It iterates through all elements and calls their `commit`
+        method, passing the final converged displacement vector `u`. This allows
+        each element to update its internal history variables.
+
+        Parameters
+        ----------
+        u : np.ndarray
+            The converged displacement vector for the time step.
+        """
         if self.elements is not None:
             for elem in self.elements:
                 elem.commit(u)

@@ -7,6 +7,10 @@ import numpy as np
 import pytest
 from structdyn.mdf.mdf import MDF
 from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.utils.helpers import elcentro_chopra
+from structdyn.mdf.analytical_methods.response_spectrum_analysis import (
+    ResponseSpectrumAnalysis,
+)
 
 
 def test_example_10_4_modal_analysis():
@@ -90,3 +94,27 @@ def test_example_16_1_ground_motion_modal():
 
     expected = 0.05888401249961952
     assert response["u5"][20] == pytest.approx(expected, rel=1e-5)
+
+
+def test_example_13_8_2_response_spectrum_analysis():
+    """
+    Example 13.8.2: 5-story shear building from Chopra, 5th Ed.
+    Validates the Response Spectrum Analysis (RSA) results against the book.
+    """
+    # Define el centro ground motion from Chopra's book- Appendix 6
+    elc = elcentro_chopra()
+    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+
+    # Define mdf system: 5-story shear building
+    masses = np.ones(5) * 45000  # mass of each floor in kg
+    stiffness = np.ones(5) * 54.82e5  # stiffness of each floor in N/m
+    mdf = MDF.from_shear_building(masses, stiffness)
+
+    # Perform response spectrum analysis
+    rsa = ResponseSpectrumAnalysis(mdf, ji=0.05, gm=gm)
+
+    modal_base_shear = rsa.modal_base_shear()
+    combined_base_shear = rsa.combine_modal_responses(modal_base_shear, method="SRSS")
+
+    expected_shear = 291221.90123453
+    assert combined_base_shear[0] == pytest.approx(expected_shear, rel=1e-4)

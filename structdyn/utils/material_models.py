@@ -6,13 +6,23 @@ class MaterialModel(ABC):
     """
     Abstract base class for all material models.
 
-    Provides:
-      - trial_response(u, v, dt)   [abstract] : compute trial force & tangent.
-      - commit_state(u)             [abstract] : update internal state.
-      - force(u, dt)                [concrete] : high‑level step (auto velocity).
+    This class defines the interface that all material models must implement.
+    It ensures that any material can be seamlessly integrated into a non-linear
+    analysis element.
 
-    The base class stores the previous displacement to compute velocity
-    when using force().
+    Methods
+    -------
+    trial_response(u, v, dt)
+        Computes the trial resisting force and tangent stiffness for a given
+        displacement and velocity.
+    commit_state(u)
+        Updates the internal history variables of the material after a
+        time step has converged.
+    get_state(u, dt)
+        A high-level convenience method for single-step updates where velocity
+        is computed automatically.
+    reset()
+        Resets the material to its initial, undeformed state.
     """
 
     def __init__(self):
@@ -82,6 +92,21 @@ class LinearElastic(MaterialModel):
 
 
 class ElasticPerfectlyPlastic(MaterialModel):
+    """
+    Elastic-Perfectly Plastic hysteretic material model.
+
+    This is a non-linear model characterized by an initial linear elastic
+    response followed by a plateau where the force remains constant upon
+    further deformation.
+
+    Parameters
+    ----------
+    uy : float
+        Yield displacement.
+    fy : float
+        Yield force.
+    """
+
     def __init__(self, uy=0.02, fy=36000):
         super().__init__()  # important to initialise base class
         self.uy = uy
@@ -173,6 +198,30 @@ class Bilinear(MaterialModel):
 
 
 class BoucWen(MaterialModel):
+    """
+    Bouc-Wen hysteretic model.
+
+    This is a highly versatile model that can represent a wide range of smooth
+    hysteretic behaviors. The restoring force is given by:
+    fs = alpha*k0*u + (1-alpha)*k0*z
+    where z is the hysteretic displacement governed by a differential equation.
+
+    Parameters
+    ----------
+    k0 : float
+        Initial stiffness.
+    alpha : float
+        Post-yield to pre-yield stiffness ratio.
+    A : float, optional
+        Controls the scale of the hysteretic component. Default is 1.0.
+    beta : float, optional
+        Controls the shape of the hysteresis loop. Default is 0.5.
+    gamma : float, optional
+        Controls the shape of the hysteresis loop. Default is 0.5.
+    n : int, optional
+        Controls the sharpness of the transition from elastic to plastic. Default is 1.
+    """
+
     def __init__(self, k0, alpha, A=1.0, beta=0.5, gamma=0.5, n=1):
         super().__init__()
         self.k0 = k0

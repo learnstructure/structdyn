@@ -1,9 +1,181 @@
 # Structural Dynamics Library (`structdyn`)
+StructDyn: An open-source Python library for structural dynamics analysis
 
-A Python library for structural dynamics analysis.
+**structdyn** is a Python package for performing structural dynamics and earthquake engineering analysis of Single-Degree-of-Freedom (SDF) and Multi-Degree-of-Freedom (MDF) systems. It provides a suite of tools for analyzing both linear and non-linear behavior, making it a versatile library for students, faculties and researchers.
 
-[![Documentation Status](https://readthedocs.org/projects/structdyn/badge/?version=latest)](https://structdyn.readthedocs.io/en/latest/)
+See the documentation here: [![Documentation Status](https://readthedocs.org/projects/structdyn/badge/?version=latest)](https://structdyn.readthedocs.io/en/latest/)
 
+
+## Features
+
+**Single-Degree-of-Freedom (SDF) Systems:**
+
+*   **Analytical Solutions:** Compute the response of SDF systems to harmonic loads.
+*   **Numerical Integration:** Solve the equation of motion using robust numerical methods, including Newmark-Beta and Central Difference.
+*   **Response Spectra:** Generate earthquake response spectra for displacement, velocity, and acceleration.
+
+**Multi-Degree-of-Freedom (MDF) Systems:**
+
+*   **Shear Building Models:** Quickly create MDF systems for typical shear buildings.
+*   **Modal Analysis:** Compute natural frequencies, mode shapes, and modal participation factors.
+*   **Response History Analysis:** Perform linear and non-linear time history analysis using direct integration.
+*   **Response Spectrum Analysis (RSA):** Estimate peak responses using modal combination methods (SRSS).
+
+**Non-Linear Analysis:**
+
+*   **Material Models:** A library of hysteretic material models, including Bilinear and Bouc-Wen.
+*   **Element Formulations:** Define non-linear behavior at the element level for MDF systems.
+*   **Robust Solvers:** Utilizes iterative Newton-Raphson schemes within the Newmark-Beta solver for accurate non-linear solutions.
+
+**Ground Motion Tools:**
+
+*   **Record Processing:** Easily load, process, and manipulate earthquake ground motion records.
+*   **Standard Formats:** Includes helper functions for common ground motion data, such as the El Centro record from Chopra's book.
+
+
+## Installation
+
+The recommended way to install `structdyn` is from the Python Package Index (PyPI) using `pip`:
+
+```bash
+pip install structdyn
+```
+
+This will install the latest stable, officially released version.
+
+**Developer Installation**
+
+If you want to install the very latest development version directly from the source, you can install it from the GitHub repository:
+
+```bash
+pip install git+https://github.com/learnstructure/structdyn.git
+```
+
+## Quick Example: Response Spectrum Analysis (MDF system)
+
+Here's an example of how to perform a Response Spectrum Analysis for a 5-story shear building, based on **Example 13.8.2 from Chopra, "Dynamics of Structures", 5th Ed**.
+
+```python
+import numpy as np
+from structdyn.mdf.mdf import MDF
+from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.mdf.analytical_methods.response_spectrum_analysis import ResponseSpectrumAnalysis
+from structdyn.utils.helpers import elcentro_chopra
+
+# 1. Define the ground motion (El Centro, from Chopra's book)
+elc = elcentro_chopra()
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+
+# 2. Define the 5-story shear building
+masses = np.ones(5) * 45000      # kg
+stiffness = np.ones(5) * 54.82e5 # N/m
+mdf = MDF.from_shear_building(masses, stiffness)
+
+# 3. Perform Response Spectrum Analysis
+rsa = ResponseSpectrumAnalysis(mdf, ji=0.05, gm=gm)
+
+# 4. Calculate modal base shear and combine using SRSS
+modal_base_shear = rsa.modal_base_shear()
+combined_base_shear = rsa.combine_modal_responses(modal_base_shear, method="SRSS")
+
+# 5. Print the result
+print(f"Combined base shear (SRSS): {combined_base_shear[0]:.2f} N")
+# Expected result from Chopra, Example 13.8.2: 291221.90 N
+```
+
+<details>
+<summary>Click for more examples (SDF Systems, Ground Motion, etc.)</summary>
+
+### Harmonic Forcing
+
+```python
+from structdyn import SDF
+from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
+
+sdf = SDF(m=1.0, k=100.0, ji=0.05)
+
+analytical = AnalyticalResponse(sdf)
+
+# Harmonic sine forcing response
+df_harm = analytical.harmonic_response(p0=10.0, w=5.0, excitation="sine")
+print(df_harm)
+```
+
+### SDF Ground Motion Response
+
+`structdyn` can be used to analyze the response of a structure to ground motion. The library includes several ground motion records, which can be loaded as follows:
+
+```python
+from structdyn.sdf.sdf import SDF
+from structdyn.ground_motions.ground_motion import GroundMotion
+
+# Load the El Centro ground motion record
+gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
+
+# Define an SDF system
+sdf = SDF(45594, 18 * 10**5, 0.05)
+
+# Solve for the response of the SDF system to the ground motion
+results = sdf.find_response_ground_motion(gm, method='central_difference')
+
+# Print the results
+print(results)
+```
+
+### Response Spectrum Generation (SDF)
+
+`structdyn` can be used to compute the response spectrum of a ground motion.
+
+```python
+# Section 6.4 (& Figure 6.6.2); Chopra A. K., Dynamics of structure, 5th edn
+import numpy as np
+from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.sdf.response_spectrum import ResponseSpectrum
+from structdyn.utils.helpers import elcentro_chopra
+
+# Define el centro ground motion from Chopra's book- Appendix 6
+elc = elcentro_chopra()
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+
+# Define the period range of interest
+periods = np.arange(0, 5.01, 0.1)
+
+# Create response spectrum object
+rs = ResponseSpectrum(periods, 0.02, gm)
+
+# Analysis
+spectra = rs.compute()
+print(spectra["Sd"][20])  # result is 0.1896749378231744
+```
+
+### Non-linear analysis SDF system
+```python
+# Example 5.5; Chopra A. K., Dynamics of structure, 5th edn
+from structdyn import SDF
+import numpy as np
+from structdyn.utils.material_models import ElasticPerfectlyPlastic
+
+# Define external load
+dt = 0.1
+time_steps = np.arange(0, 1.01, dt)
+load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
+load_values[time_steps >= 0.6] = 0
+
+# Create SDF object
+material_model = ElasticPerfectlyPlastic(uy=0.02, fy=36000)
+sdf = SDF(45594, 18 * 10**5, 0.05, fd=material_model)
+
+# Analysis
+responses = sdf.find_response(
+    time_steps, load_values, method="newmark_beta", acc_type="average"
+)
+
+print(responses)
+print(responses["displacement"][10])  # result is 0.03606328101158249
+
+```
+
+</details>
 
 ## Citing `structdyn`
 
@@ -25,181 +197,6 @@ Here is the citation in BibTeX format:
 }
 ```
 
-## Features
-
-*   **Single-Degree-of-Freedom (SDF) Systems:**
-    *   Define linear and nonlinear SDF systems.
-    *   Analyze free and forced vibrations.
-    *   Calculate responses using analytical and numerical methods.
-*   **Multi-Degree-of-Freedom (MDF) Systems:**
-    *   Define MDF systems with custom mass and stiffness matrices.
-    *   Perform modal analysis to determine natural frequencies and mode shapes.
-    *   Analyze the dynamic response using modal superposition.
-*   **Ground Motion Analysis:**
-    *   Load and scale ground motion records.
-    *   Generate response spectra.
-    *   Analyze the response of structures to earthquake excitations.
-*   **Numerical Methods:**
-    *   A suite of numerical solvers, including:
-        *   Central Difference Method
-        *   Newmark-Beta Method
-        *   Linear Interpolation Method
-*   **Material Models:**
-    *   Elastic-perfectly plastic material model for nonlinear analysis.
-
-
-## Installation
-
-Install the package using pip:
-
-```bash
-pip install git+https://github.com/learnstructure/structdyn.git
-```
-
-## Usage
-
-Here's a quick example of how to use `structdyn` to solve a simple SDF system:
-
-```python
-import numpy as np
-from structdyn.sdf.sdf import SDF
-
-# 1. Define the structure
-m = 45594  # mass (kg)
-k = 18e5  # stiffness (N/m)
-ji = 0.05  # damping ratio
-sdf = SDF(m, k, ji)
-
-# 2. Define the dynamic loading
-dt = 0.1
-time = np.arange(0, 10.01, dt)
-load = np.zeros_like(time)
-load[time <= 2] = 1000 * np.sin(np.pi * time[time <= 2])
-
-# 3. Solve the equation of motion
-# Available methods: 'newmark_beta', 'central_difference', 'interpolation'
-results = sdf.find_response(time, load, method="newmark_beta")
-
-# 4. Print the results
-print(results)
-```
-
-## Examples
-
-To run the examples provided in the `examples` directory, clone the repository and run the desired example file:
-
-```bash
-git clone https://github.com/learnstructure/structdyn.git
-cd structdyn
-pip install -e .
-python -m examples.sdf.eg_newmark
-```
-
-### Analytical Methods
-
-`structdyn` can also solve for the response of an SDF system analytically for certain cases.
-
-#### Free Vibration
-
-```python
-from structdyn import SDF
-from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
-
-sdf = SDF(m=1.0, k=100.0, ji=0.05)
-
-analytical = AnalyticalResponse(sdf)
-
-# Free vibration response
-df_free = analytical.free_vibration(u0=0.01, v0=0.0)
-print(df_free)
-```
-
-#### Harmonic Forcing
-
-```python
-from structdyn import SDF
-from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
-
-sdf = SDF(m=1.0, k=100.0, ji=0.05)
-
-analytical = AnalyticalResponse(sdf)
-
-# Harmonic sine forcing response
-df_harm = analytical.harmonic_response(p0=10.0, w=5.0, excitation="sine")
-print(df_harm)
-```
-
-### Ground Motion Analysis
-
-`structdyn` can be used to analyze the response of a structure to ground motion. The library includes several ground motion records, which can be loaded as follows:
-
-```python
-from structdyn.sdf.sdf import SDF
-from structdyn.ground_motions.ground_motion import GroundMotion
-
-# Load the El Centro ground motion record
-gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
-
-# Define an SDF system
-sdf = SDF(45594, 18 * 10**5, 0.05)
-
-# Solve for the response of the SDF system to the ground motion
-results = sdf.find_response_ground_motion(gm, method='central_difference')
-
-# Print the results
-print(results)
-```
-
-### Nonlinear Analysis
-
-`structdyn` supports nonlinear analysis using the `fd` parameter of the `SDF` class. Currently, the only available nonlinear model is the elastic-perfectly plastic model.
-
-```python
-import numpy as np
-from structdyn.sdf.sdf import SDF
-
-# Define an elastic-perfectly plastic SDF system
-sdf_epp = SDF(m=45594, k=18e5, ji=0.05, fd="elastoplastic", f_y=200000)
-
-# Define the dynamic loading
-dt = 0.1
-time = np.arange(0, 10.01, dt)
-load = np.zeros_like(time)
-load[time <= 2] = 1000 * np.sin(np.pi * time[time <= 2])
-
-
-# Solve for the response of the nonlinear system
-results_epp = sdf_epp.find_response(time, load)
-
-# Print the results
-print(results_epp)
-```
-
-### Response Spectrum Analysis
-
-`structdyn` can be used to compute the response spectrum of a ground motion.
-
-```python
-import numpy as np
-from structdyn.ground_motions.ground_motion import GroundMotion
-from structdyn.sdf.response_spectrum import ResponseSpectrum
-
-# Load the El Centro ground motion record
-gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
-
-# Define the periods for which to compute the response spectrum
-periods = np.arange(0, 5.01, 0.1)
-
-# Create a ResponseSpectrum object
-rs = ResponseSpectrum(periods, 0.02, gm)
-
-# Compute the response spectrum
-results = rs.compute()
-
-# Print the results
-print(results)
-```
-
 ## Running Tests
 
 To run the tests, you will need to install `pytest`. You can then run the tests from the root directory of the project:
@@ -211,10 +208,4 @@ pytest
 
 ## Contributing
 
-Contributions are welcome! If you would like to contribute to the project, please follow these steps:
-
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and add tests.
-4.  Run the tests to ensure that everything is working correctly.
-5.  Submit a pull request.
+Contributions are welcome! Please fork the repository, create a new branch for your feature or bug fix, and submit a pull request.

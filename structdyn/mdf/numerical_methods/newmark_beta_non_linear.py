@@ -3,7 +3,29 @@ import pandas as pd
 
 
 class NewmarkBetaNonLinear:
+    """
+    Solves the equations of motion for a non-linear MDOF system using the Newmark-Beta method.
+
+    This class implements an implicit, step-by-step time integration algorithm.
+    For non-linear systems, an iterative Newton-Raphson procedure is used
+    within each time step to satisfy equilibrium.
+
+    Attributes
+    ----------
+    system : object
+        A system object that represents the structure. It must provide the
+        mass matrix (M), damping matrix (C), number of DOFs (ndof), and
+        methods to compute the resisting force and tangent stiffness.
+    dt : float
+        The time step for the integration.
+    beta : float
+        The Newmark-Beta parameter 'beta'. Defaults to 1/4 (average acceleration).
+    gamma : float
+        The Newmark-Beta parameter 'gamma'. Defaults to 1/2 (average acceleration).
+    """
+
     def __init__(self, system, dt, beta=1 / 4, gamma=1 / 2):
+
         self.system = system
         self.dt = dt
         self.beta = beta
@@ -22,6 +44,34 @@ class NewmarkBetaNonLinear:
         self.A3 = (1 / (2 * beta) - 1) * M + dt * (gamma / (2 * beta) - 1) * C
 
     def compute_solution(self, time, p, tol=1e-6, max_iter=20):
+        """
+        Performs the step-by-step non-linear time history analysis.
+
+        This method iterates through each time step, using a Newton-Raphson
+        scheme to solve for the displacements that satisfy the dynamic
+        equilibrium equation.
+
+        Parameters
+        ----------
+        time : np.ndarray
+            A 1D array of time points for the analysis.
+        p : np.ndarray
+            An array of external forces, `p(t)`, with shape `(len(time), ndof)`.
+        tol : float, optional
+            The convergence tolerance for the norm of the residual force vector
+            in the Newton-Raphson iteration. The default is 1e-6.
+        max_iter : int, optional
+            The maximum number of iterations allowed per time step for the
+            Newton-Raphson solver. The default is 20.
+
+        Returns
+        -------
+        pd.DataFrame
+            A pandas DataFrame containing the full time history of the response.
+            Columns include 'time', displacements ('u1', 'u2', ...),
+            velocities ('v1', 'v2', ...), accelerations ('a1', 'a2', ...),
+            and internal resisting forces ('fs1', 'fs2', ...).
+        """
         n = len(time)
         dt = self.dt
         ndof = self.system.ndof

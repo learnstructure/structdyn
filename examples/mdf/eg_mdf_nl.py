@@ -1,20 +1,3 @@
-# from structdyn.utils.material_models import BoucWen
-# from structdyn.mdf.mdf_helpers.element_models import ShearStoryElement
-
-# # Material models for each story
-# story1_material = BoucWen(k0=1000, alpha=0.02, A=1.0, beta=0.5, gamma=0.5, n=1)
-# story2_material = BoucWen(k0=800, alpha=0.02, A=1.0, beta=0.5, gamma=0.5, n=1)
-
-# # Elements: story between ground (DOF 0) and first floor (DOF 1), etc.
-# elements = [
-#     ShearStoryElement(story1_material, dof_indices=[0, 1]),
-#     ShearStoryElement(story2_material, dof_indices=[1, 2]),
-# ]
-
-# print("Elements created with Bouc-Wen material models:")
-# for i, element in enumerate(elements):
-#     print(f"Element {i+1}: {element}")
-
 import numpy as np
 import matplotlib.pyplot as plt
 from structdyn.mdf import MDF
