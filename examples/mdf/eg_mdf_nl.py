@@ -1,48 +1,57 @@
+# Example 16.4; Chopra A. K., Dynamics of structure, 5th edn
 import numpy as np
 import matplotlib.pyplot as plt
 from structdyn.mdf import MDF
-from structdyn.utils.material_models import BoucWen
+from structdyn.utils.material_models import BoucWen, Bilinear
 from structdyn.mdf.mdf_helpers.element_models import ShearStoryElement
+from structdyn.ground_motions.ground_motion import GroundMotion
 
-# Masses of the two floors
-masses = [1.0, 1.0]
-ndof = len(masses)
+# Define ground motion as given in the same example
+dt = 0.1
+time = np.arange(0, 2.01, dt)
+acc = (1.93 / 9.81) * np.sin(2 * np.pi * time)
+acc[time > 1.0] = 0
+gm = GroundMotion.from_arrays(acc, dt)
+# Influence vector
+inf_vec = np.ones(5)
 
-# Placeholder stiffness matrix (not used when elements are present)
-K_placeholder = np.zeros((ndof, ndof))
+# Define MDF system
+masses = np.ones(5) * 0.2591 * 1e5
+stiffness = np.ones(5) * 100 * 1e5
+system = MDF.from_shear_building(masses, stiffness)
 
-# Create the MDF system
-system = MDF(np.diag(masses), K_placeholder)
+# system = MDF(np.diag(masses), np.diag(stiffness))
+system.set_modal_damping(zeta=[0.05, 0.05, 0.05, 0.05, 0.05])  # set damping matrix
 
 # Material models
-story1_material = BoucWen(k0=1000, alpha=0.02, A=1.0, beta=0.5, gamma=0.5, n=1)
-story2_material = BoucWen(k0=800, alpha=0.02, A=1.0, beta=0.5, gamma=0.5, n=1)
+story1_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # base story
+story2_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+story3_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+story4_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+story5_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # top story
 
 # Elements
 elements = [
     ShearStoryElement(story1_material, dof_indices=[0]),  # base story
     ShearStoryElement(story2_material, dof_indices=[0, 1]),  # interior story
+    ShearStoryElement(story3_material, dof_indices=[1, 2]),  # interior story
+    ShearStoryElement(story4_material, dof_indices=[2, 3]),  # interior story
+    ShearStoryElement(story5_material, dof_indices=[3, 4]),  # top story
 ]
 
-# Load definition (example: sinusoidal force on top floor)
-dt = 0.01
-t = np.arange(0, 10, dt)
-p = np.zeros((len(t), ndof))
-p[:, 1] = 10 * np.sin(2 * np.pi * 1.0 * t)
-
 # Run analysis
-response = system.find_response(
-    time=t,
-    load=p,
-    method="newmark_beta",
-    elements=elements,  # tol=1e-6, max_iter=20
+response = system.find_response_ground_motion(
+    gm, inf_vec, method="newmark_beta", elements=elements, tol=1e-6, max_iter=20
 )
 
-print(response)
+
+print(response.iloc[:, :6])  # print displacements of all 5 DOFs
+print(response.iloc[20, 5])  # result is 0.03998638459760659
+
 # Plot top floor displacement
-response.plot(
-    x="time",
-    y="u1",
-    kind="line",
-)
-plt.show()
+# response.plot(
+#     x="time",
+#     y="u1",
+#     kind="line",
+# )
+# plt.show()

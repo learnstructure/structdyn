@@ -1,5 +1,5 @@
 # Structural Dynamics Library (`structdyn`)
-StructDyn: An open-source Python library for structural dynamics analysis
+An open-source Python library for structural dynamics analysis
 
 **structdyn** is a Python package for performing structural dynamics and earthquake engineering analysis of Single-Degree-of-Freedom (SDF) and Multi-Degree-of-Freedom (MDF) systems. It provides a suite of tools for analyzing both linear and non-linear behavior, making it a versatile library for students, faculties and researchers.
 

@@ -11,6 +11,8 @@ from structdyn.utils.helpers import elcentro_chopra
 from structdyn.mdf.analytical_methods.response_spectrum_analysis import (
     ResponseSpectrumAnalysis,
 )
+from structdyn.utils.material_models import Bilinear
+from structdyn.mdf.mdf_helpers.element_models import ShearStoryElement
 
 
 def test_example_10_4_modal_analysis():
@@ -118,3 +120,48 @@ def test_example_13_8_2_response_spectrum_analysis():
 
     expected_shear = 291221.90123453
     assert combined_base_shear[0] == pytest.approx(expected_shear, rel=1e-4)
+
+
+def test_mdf_nl_chopra_example_16_4():
+    """
+    Test non-linear MDF analysis based on Example 16.4 from Chopra, 5th Ed.
+    """
+    # 1. Define ground motion (as specified in the example)
+    dt = 0.1
+    time = np.arange(0, 2.01, dt)
+    acc = (1.93 / 9.81) * np.sin(2 * np.pi * time)
+    acc[time > 1.0] = 0
+    gm = GroundMotion.from_arrays(acc, dt)
+    inf_vec = np.ones(5)
+
+    # 2. Define the linear properties of the MDF system
+    masses = np.ones(5) * 0.2591 * 1e5
+    stiffness = np.ones(5) * 100 * 1e5
+    system = MDF.from_shear_building(masses, stiffness)
+    system.set_modal_damping(zeta=[0.05, 0.05, 0.05, 0.05, 0.05])
+
+    # 3. Define the non-linear properties
+    story1_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # base story
+    story2_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+    story3_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+    story4_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # interior story
+    story5_material = Bilinear(uy=0.0125, fy=125e3, alpha=0.05)  # top story
+    elements = [
+        ShearStoryElement(story1_material, dof_indices=[0]),
+        ShearStoryElement(story2_material, dof_indices=[0, 1]),
+        ShearStoryElement(story3_material, dof_indices=[1, 2]),
+        ShearStoryElement(story4_material, dof_indices=[2, 3]),
+        ShearStoryElement(story5_material, dof_indices=[3, 4]),
+    ]
+
+    # 4. Run the non-linear analysis
+    response = system.find_response_ground_motion(
+        gm, inf_vec, method="newmark_beta", elements=elements, tol=1e-6, max_iter=20
+    )
+
+    # 5. Assert the result
+    # The expected result is the displacement of the 5th story (u5) at time=2.0s
+    expected_u5_at_t20 = 0.03998638459760659
+    calculated_u5_at_t20 = response.iloc[20, 5]  # Corresponds to u5 at time=2.0
+
+    assert calculated_u5_at_t20 == pytest.approx(expected_u5_at_t20)

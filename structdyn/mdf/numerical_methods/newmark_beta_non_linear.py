@@ -24,7 +24,7 @@ class NewmarkBetaNonLinear:
         The Newmark-Beta parameter 'gamma'. Defaults to 1/2 (average acceleration).
     """
 
-    def __init__(self, system, dt, beta=1 / 4, gamma=1 / 2):
+    def __init__(self, system, dt, beta=1 / 4, gamma=1 / 2, tol=1e-6, max_iter=50):
 
         self.system = system
         self.dt = dt
@@ -32,6 +32,8 @@ class NewmarkBetaNonLinear:
         self.gamma = gamma
         # Pre‑compute coefficient matrices (these depend only on M, C, dt)
         self._compute_coeff_matrices()
+        self.tol = tol
+        self.max_iter = max_iter
 
     def _compute_coeff_matrices(self):
         dt = self.dt
@@ -43,7 +45,7 @@ class NewmarkBetaNonLinear:
         self.A2 = (1 / (beta * dt)) * M + (gamma / beta - 1) * C
         self.A3 = (1 / (2 * beta) - 1) * M + dt * (gamma / (2 * beta) - 1) * C
 
-    def compute_solution(self, time, p, tol=1e-6, max_iter=20):
+    def compute_solution(self, time, p, tol=None, max_iter=None):
         """
         Performs the step-by-step non-linear time history analysis.
 
@@ -72,6 +74,8 @@ class NewmarkBetaNonLinear:
             velocities ('v1', 'v2', ...), accelerations ('a1', 'a2', ...),
             and internal resisting forces ('fs1', 'fs2', ...).
         """
+        tol = tol if tol is not None else self.tol
+        max_iter = max_iter if max_iter is not None else self.max_iter
         n = len(time)
         dt = self.dt
         ndof = self.system.ndof
@@ -101,11 +105,28 @@ class NewmarkBetaNonLinear:
                 u_trial, v[i], dt
             )
 
-            p_hat = p[i + 1] + self.A1 @ u[i] + self.A2 @ v[i] + self.A3 @ a[i]
+            p_hat = p[i + 1] + self.A1 @ u[i] + self.A2 @ v[i] + self.system.M @ a[i]
 
             converged = False
             for it in range(max_iter):
-                R_hat = p_hat - Fs_trial - self.A1 @ u_trial
+                # Newmark kinematics
+                a_trial = (
+                    (u_trial - u[i]) / (self.beta * dt**2)
+                    - v[i] / (self.beta * dt)
+                    - (1 / (2 * self.beta) - 1) * a[i]
+                )
+
+                v_trial = v[i] + dt * ((1 - self.gamma) * a[i] + self.gamma * a_trial)
+
+                # True residual
+                R_hat = (
+                    p[i + 1]
+                    - Fs_trial
+                    - self.system.C @ v_trial
+                    - self.system.M @ a_trial
+                )
+                # R_hat = p_hat - Fs_trial - self.A1 @ u_trial
+
                 if np.linalg.norm(R_hat) < tol:
                     converged = True
                     break

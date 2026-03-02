@@ -24,7 +24,7 @@ response = mdf.find_response_ground_motion(
     gm, inf_vec, method="newmark_beta", use_modal=True, n_modes=2
 )
 # Note we can get more accurate results by considering more modes. Also if we remove use_modal, then direct integration of coupled equations would give more accurate results.
-print(response)
+print(response.iloc[:, :6])
 print(response["u5"][20])  # result = 0.05888401249961952
 
 # Plot response
