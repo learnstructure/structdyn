@@ -161,7 +161,7 @@ def test_mdf_nl_chopra_example_16_4():
 
     # 5. Assert the result
     # The expected result is the displacement of the 5th story (u5) at time=2.0s
-    expected_u5_at_t20 = 0.03998638459760659
+    expected_u5_at_t20 = 0.03998638459760687
     calculated_u5_at_t20 = response.iloc[20, 5]  # Corresponds to u5 at time=2.0
 
     assert calculated_u5_at_t20 == pytest.approx(expected_u5_at_t20)

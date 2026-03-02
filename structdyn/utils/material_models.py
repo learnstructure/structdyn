@@ -303,7 +303,7 @@ class RambergOsgood(MaterialModel):
     sigma_y : float
         Yield strength (force at yield).
     alpha : float, optional
-        Yield offset parameter (default 0.002). The plastic strain at yield is
+        Yield offset parameter (default 1). The plastic strain at yield is
         alpha * (sigma_y / E).
     n : float, optional
         Exponent controlling the sharpness of the transition (default 10). Higher

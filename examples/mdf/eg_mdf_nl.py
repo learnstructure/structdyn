@@ -46,12 +46,20 @@ response = system.find_response_ground_motion(
 
 
 print(response.iloc[:, :6])  # print displacements of all 5 DOFs
-print(response.iloc[20, 5])  # result is 0.03998638459760659
+print(response.iloc[20, 5])  # result is 0.03998638459760687
 
 # Plot top floor displacement
+response.plot(
+    x="time",
+    y="u5",
+    kind="line",
+)
+plt.show()
+
+# Plot
 # response.plot(
-#     x="time",
-#     y="u1",
+#     x="u1",
+#     y="fs1",
 #     kind="line",
 # )
 # plt.show()

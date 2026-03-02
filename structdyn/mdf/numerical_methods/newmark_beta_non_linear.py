@@ -109,23 +109,8 @@ class NewmarkBetaNonLinear:
 
             converged = False
             for it in range(max_iter):
-                # Newmark kinematics
-                a_trial = (
-                    (u_trial - u[i]) / (self.beta * dt**2)
-                    - v[i] / (self.beta * dt)
-                    - (1 / (2 * self.beta) - 1) * a[i]
-                )
 
-                v_trial = v[i] + dt * ((1 - self.gamma) * a[i] + self.gamma * a_trial)
-
-                # True residual
-                R_hat = (
-                    p[i + 1]
-                    - Fs_trial
-                    - self.system.C @ v_trial
-                    - self.system.M @ a_trial
-                )
-                # R_hat = p_hat - Fs_trial - self.A1 @ u_trial
+                R_hat = p_hat - Fs_trial - self.A1 @ u_trial
 
                 if np.linalg.norm(R_hat) < tol:
                     converged = True
