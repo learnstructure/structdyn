@@ -23,7 +23,7 @@ See the documentation here: [![Documentation Status](https://readthedocs.org/pro
 
 **Non-Linear Analysis:**
 
-*   **Material Models:** A library of hysteretic material models, including Bilinear and Bouc-Wen.
+*   **Material Models:** A library of hysteretic material models, including elastic perfectly plastic, bilinear, Bouc-Wen & Ramberg-Osgood model.
 *   **Element Formulations:** Define non-linear behavior at the element level for MDF systems.
 *   **Robust Solvers:** Utilizes iterative Newton-Raphson schemes within the Newmark-Beta solver for accurate non-linear solutions.
 

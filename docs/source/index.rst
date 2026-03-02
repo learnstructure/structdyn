@@ -32,11 +32,6 @@ Features
 *   **Record Processing:** Easily load, process, and manipulate earthquake ground motion records.
 *   **Standard Formats:** Includes helper functions for common ground motion data, such as the El Centro record.
 
-**Coming Soon:**
-
-*   More advanced material models (e.g., Ramberg-Osgood).
-*   More modal combination rules (e.g., CQC).
-
 Installation
 ------------
 
