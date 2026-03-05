@@ -453,3 +453,202 @@ class RambergOsgood(MaterialModel):
         self.u_rev = 0.0
         self.fs_rev = 0.0
         # trial attributes will be overwritten on next call
+
+
+class Takeda(MaterialModel):
+    """
+    Takeda peak-oriented degrading hysteresis model.
+
+    Parameters
+    ----------
+    K0 : float
+        Initial elastic stiffness
+    Fy : float
+        Yield force
+    alpha : float
+        Post-yield stiffness ratio
+    beta : float
+        Unloading stiffness degradation exponent
+    """
+
+    def __init__(self, K0, Fy, alpha=0.0, beta=0.3):
+        super().__init__()
+
+        self.K0 = K0
+        self.Fy = Fy
+        self.alpha = alpha
+        self.beta = beta
+
+        self.Kp = alpha * K0
+        self.uy = Fy / K0
+
+        self.reset()
+
+    # ---------------------------------------------------------
+    # Envelope
+    # ---------------------------------------------------------
+
+    def envelope_force(self, u):
+
+        if u >= self.uy:
+            return self.Fy + self.Kp * (u - self.uy)
+
+        elif u <= -self.uy:
+            return -self.Fy + self.Kp * (u + self.uy)
+
+        else:
+            return self.K0 * u
+
+    # ---------------------------------------------------------
+    # Trial response
+    # ---------------------------------------------------------
+
+    def trial_response(self, u, v, dt):
+
+        du = u - self.u_last
+
+        if abs(du) < 1e-14:
+            direction = self.last_direction
+        else:
+            direction = np.sign(du)
+
+        reversal = direction * self.last_direction < 0
+
+        # -------------------------------------------------
+        # Reversal detection
+        # -------------------------------------------------
+
+        if reversal:
+
+            self.u_rev = self.u_last
+            self.f_rev = self.f_last
+
+            mu = max(abs(self.u_last) / self.uy, 1.0)
+
+            self.K_unload = self.K0 * (mu ** (-self.beta))
+
+            self.state = "unloading"
+
+            if direction > 0:
+                self.target_u = self.u_peak_pos
+                self.target_f = self.f_peak_pos
+            else:
+                self.target_u = self.u_peak_neg
+                self.target_f = self.f_peak_neg
+
+        # -------------------------------------------------
+        # Envelope loading
+        # -------------------------------------------------
+
+        if self.state == "envelope":
+
+            fs = self.envelope_force(u)
+
+            if abs(u) < self.uy:
+                kt = self.K0
+            else:
+                kt = self.Kp
+
+            if u > self.u_peak_pos:
+                self.u_peak_pos = u
+                self.f_peak_pos = fs
+
+            if u < self.u_peak_neg:
+                self.u_peak_neg = u
+                self.f_peak_neg = fs
+
+        # -------------------------------------------------
+        # Unloading branch
+        # -------------------------------------------------
+
+        elif self.state == "unloading":
+
+            fs = self.f_rev + self.K_unload * (u - self.u_rev)
+            kt = self.K_unload
+
+            # Check if reloading toward envelope begins
+            if direction * (u - self.u_rev) > 0:
+
+                self.state = "reloading"
+
+                self.K_reload = (self.target_f - self.f_rev) / (
+                    self.target_u - self.u_rev + 1e-14
+                )
+
+                fs = self.f_rev + self.K_reload * (u - self.u_rev)
+                kt = self.K_reload
+
+        # -------------------------------------------------
+        # Reloading branch
+        # -------------------------------------------------
+
+        elif self.state == "reloading":
+
+            fs = self.f_rev + self.K_reload * (u - self.u_rev)
+            kt = self.K_reload
+
+            # Check if envelope reached
+            if direction > 0 and u >= self.u_peak_pos:
+
+                self.state = "envelope"
+                fs = self.envelope_force(u)
+                kt = self.Kp if abs(u) >= self.uy else self.K0
+
+            elif direction < 0 and u <= self.u_peak_neg:
+
+                self.state = "envelope"
+                fs = self.envelope_force(u)
+                kt = self.Kp if abs(u) >= self.uy else self.K0
+
+        else:
+
+            fs = self.envelope_force(u)
+            kt = self.K0
+
+        # -------------------------------------------------
+        # Save trial variables
+        # -------------------------------------------------
+
+        self.fs_trial = fs
+        self.kt_trial = kt
+        self.direction_trial = direction
+        self.u_last_trial = u
+
+        return fs, kt, False
+
+    # ---------------------------------------------------------
+    # Commit state
+    # ---------------------------------------------------------
+
+    def commit_state(self, u):
+
+        self.u_last = self.u_last_trial
+        self.f_last = self.fs_trial
+        self.last_direction = self.direction_trial
+
+    # ---------------------------------------------------------
+    # Reset
+    # ---------------------------------------------------------
+
+    def reset(self):
+
+        super().reset()
+
+        self.state = "envelope"
+
+        self.u_last = 0.0
+        self.f_last = 0.0
+
+        self.last_direction = 0
+
+        self.u_peak_pos = self.uy
+        self.f_peak_pos = self.Fy
+
+        self.u_peak_neg = -self.uy
+        self.f_peak_neg = -self.Fy
+
+        self.u_rev = 0.0
+        self.f_rev = 0.0
+
+        self.K_unload = self.K0
+        self.K_reload = self.K0

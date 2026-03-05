@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from structdyn.utils.stability_checks import check_stability_newmark
 
 
 class NewmarkBetaNonLinear:
@@ -96,6 +97,12 @@ class NewmarkBetaNonLinear:
             self.system.commit_elements(u[0])
         a[0] = np.linalg.solve(self.system.M, p[0] - self.system.C @ v[0] - Fs0)
         fs_hist[0] = Fs0
+
+        # Check for stability
+        if self.system.modal.phi is None:
+            self.system.modal.modal_analysis()
+        omega_max = np.max(self.system.modal.omega)
+        check_stability_newmark(self.dt, 2 * np.pi / omega_max, self.beta, self.gamma)
 
         # Time stepping
         for i in range(n - 1):

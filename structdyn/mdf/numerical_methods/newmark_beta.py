@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.linalg import lu_factor, lu_solve
+from structdyn.utils.stability_checks import check_stability_newmark
 
 
 def get_newmark_parameters(acc_type="linear"):
@@ -128,6 +129,12 @@ class NewmarkBetaMDF:
 
         if P.shape != (nt, ndof):
             raise ValueError("P must have shape (nt, ndof)")
+
+        # Check for stability
+        if self.mdf.modal.phi is None:
+            self.mdf.modal.modal_analysis()
+        omega_max = np.max(self.mdf.modal.omega)
+        check_stability_newmark(self.dt, 2 * np.pi / omega_max, self.beta, self.gamma)
 
         if self.use_modal:
             # --------------------------------------------------------

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from structdyn.utils.stability_checks import check_stability_central_difference
 
 
 class CentralDifference:
@@ -41,6 +42,9 @@ class CentralDifference:
         self.a = self.m / dt**2 - self.c / (2 * dt)
         self.b = self.k - 2 * self.m / dt**2
         self.b_bar = 2 * self.m / dt**2
+
+        # Check for stability
+        check_stability_central_difference(self.dt, sdf.t_n)
 
     def compute_solution(self, time, p):
         """

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import lu_factor, lu_solve
 
+from structdyn.utils.stability_checks import check_stability_central_difference
+
 
 class CentralDifferenceMDF:
     """
@@ -86,6 +88,12 @@ class CentralDifferenceMDF:
 
         if P.shape != (nt, ndof):
             raise ValueError("P must have shape (nt, ndof)")
+
+        # Check for stability
+        if self.mdf.modal.phi is None:
+            self.mdf.modal.modal_analysis()
+        omega_max = np.max(self.mdf.modal.omega)
+        check_stability_central_difference(self.dt, 2 * np.pi / omega_max)
 
         if self.use_modal:
             # ------------------------------------------------------------

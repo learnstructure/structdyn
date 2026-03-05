@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from structdyn.utils.stability_checks import check_stability_newmark
 
 
 def get_newmark_parameters(acc_type="linear"):
@@ -78,6 +79,9 @@ class NewmarkBeta:
 
         # Precompute Newmark constants
         self._compute_newmark_constants()
+
+        # Check for stability
+        check_stability_newmark(self.dt, sdf.t_n, self.beta, self.gamma)
 
     def compute_solution(self, time_steps, load_values):
         """
