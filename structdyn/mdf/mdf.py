@@ -1,6 +1,7 @@
 import numpy as np
 from .analytical_methods.modal_analysis import ModalAnalysis
 from structdyn.ground_motions import GroundMotion
+from structdyn.mdf.mdf_helpers.visualization import ShearBuildingVisualizer
 
 
 class MDF:
@@ -47,6 +48,7 @@ class MDF:
         self._validate()
 
         self.modal = ModalAnalysis(self)
+        self._visualizer = None  # Will be initialized when needed
 
     # -------------------------------------------------
     # Validation
@@ -126,7 +128,10 @@ class MDF:
         from .mdf_helpers.builders import _shear_building_logic
 
         M, K = _shear_building_logic(masses, stiffnesses)
-        return cls(M, K)
+        instance = cls(M, K)
+        instance.masses = masses
+        instance.stiffnesses = stiffnesses
+        return instance
 
     def find_response(
         self, time, load, method="central_difference", elements=None, **kwargs
@@ -294,3 +299,10 @@ class MDF:
         if self.elements is not None:
             for elem in self.elements:
                 elem.commit(u)
+
+    @property
+    def plot(self):
+        """Provides access to plotting methods for the shear building."""
+        if self._visualizer is None:
+            self._visualizer = ShearBuildingVisualizer(self)
+        return self._visualizer
