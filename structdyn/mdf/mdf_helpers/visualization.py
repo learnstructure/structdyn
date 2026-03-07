@@ -260,15 +260,36 @@ class ShearBuildingVisualizer:
                 ylim = ax_gm.get_ylim()
                 time_marker.set_data([current_time, current_time], [ylim[0], ylim[1]])
 
-        interval = (time_vector[1] - time_vector[0]) * 1000 / speed_up
+        # --- New robust logic for speed_up ---
+        dt = time_vector[1] - time_vector[0]
+
+        # Target 50 FPS for a smooth animation
+        target_interval_ms = 20
+
+        # Required interval to match the desired speed_up without frame skipping
+        required_interval_ms = dt * 1000 / speed_up
+
+        if required_interval_ms >= target_interval_ms:
+            # For slow motion or real-time, no need to skip frames
+            frame_step = 1
+            interval = required_interval_ms
+        else:
+            # For fast motion, skip frames to maintain a smooth playback
+            interval = target_interval_ms
+            # Calculate how many frames to jump over
+            frame_step = int(round(speed_up * interval / (dt * 1000)))
+            # Ensure we are always moving forward
+            frame_step = max(1, frame_step)
+
+        frames_to_render = np.arange(0, len(time_vector), frame_step)
+
         anim = FuncAnimation(
             fig,
             update,
-            frames=np.arange(len(time_vector)),
+            frames=frames_to_render,
             interval=interval,
             repeat=repeat,
         )
-
         # Adjust layout to prevent text from being trimmed
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 

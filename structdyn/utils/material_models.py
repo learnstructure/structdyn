@@ -264,34 +264,6 @@ class BoucWen(MaterialModel):
         self.z = self.z_trial
 
 
-import numpy as np
-from abc import ABC, abstractmethod
-
-
-# (Your MaterialModel base class remains unchanged)
-class MaterialModel(ABC):
-    def __init__(self):
-        self._u_prev = 0.0
-
-    @abstractmethod
-    def trial_response(self, u, v, dt):
-        pass
-
-    @abstractmethod
-    def commit_state(self, u):
-        pass
-
-    def get_state(self, u, dt):
-        v = (u - self._u_prev) / dt
-        fs, kt, flag = self.trial_response(u, v, dt)
-        self.commit_state(u)
-        self._u_prev = u
-        return fs, kt, flag
-
-    def reset(self):
-        self._u_prev = 0.0
-
-
 class RambergOsgood(MaterialModel):
     """
     Ramberg‑Osgood steel material model with kinematic hardening (Masing rule).

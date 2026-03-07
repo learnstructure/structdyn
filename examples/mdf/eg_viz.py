@@ -32,5 +32,6 @@ anim = shear_building.plot.animate_response(
     response,
     scale_factor=20,  # Increased scale factor for clarity
     ground_motion=(gm.time, gm.acc_g),
+    speed_up=1,
     # save_path="building_response.mp4",  # <-- to save animation, you need to have ffmpeg installed and uncomment this line
 )
