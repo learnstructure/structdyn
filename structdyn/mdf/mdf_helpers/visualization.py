@@ -42,16 +42,23 @@ class ShearBuildingVisualizer:
         ax.clear()
         displacements = np.insert(displacements, 0, 0)  # Add base displacement
 
-        # Plot columns
+        # Generate points for plotting smooth column curves
+        num_points_curve = 20
+        t_curve = np.linspace(0, 1, num_points_curve)
+        # Cubic Hermite spline basis for zero-slope start/end points
+        hermite_poly = -2 * t_curve**3 + 3 * t_curve**2
+
+        # Plot columns with double curvature
         for i in range(self.n_stories):
             y1, y2 = i * self.story_height, (i + 1) * self.story_height
             x1, x2 = displacements[i], displacements[i + 1]
-            ax.plot([x1, x2], [y1, y2], "b-")
-            ax.plot(
-                [x1 + self.building_width, x2 + self.building_width],
-                [y1, y2],
-                "b-",
-            )
+
+            y_curve = np.linspace(y1, y2, num_points_curve)
+            x_curve = x1 + (x2 - x1) * hermite_poly
+
+            # Plot left and right columns
+            ax.plot(x_curve, y_curve, "b-")
+            ax.plot(x_curve + self.building_width, y_curve, "b-")
 
         # Plot floors (as horizontal lines)
         for i in range(self.n_stories):
@@ -92,45 +99,81 @@ class ShearBuildingVisualizer:
         """Plots the undeformed structure of the shear building."""
         fig, ax = plt.subplots()
         displacements = np.zeros(self.n_stories)
-        self._plot_displaced_shape(ax, displacements, title="Shear Building Structure")
-        ax.set_xlabel("Displacement")
+        self._plot_displaced_shape(ax, displacements, title="Shear Building")
+        # ax.set_xlabel("Displacement")
         plt.show()
 
-    def mode_shape(self, mode_number):
+    def mode_shape(self, mode_number=[1]):
         """
-        Plots a specified mode shape of the shear building.
+        Plots one or more specified mode shapes of the shear building.
 
         Parameters
         ----------
-        mode_number : int
-            The mode number to plot (1-indexed).
+        mode_number : int or list of int, optional
+            A single mode number or a list of mode numbers to plot (1-indexed).
+            If not provided, defaults to plotting the first mode, i.e., `[1]`.
         """
+
+        if isinstance(mode_number, int):
+            mode_number = [mode_number]
+
+        if not isinstance(mode_number, list) or not all(
+            isinstance(n, int) for n in mode_number
+        ):
+            raise TypeError("mode_number must be an integer or a list of integers.")
+
         if self.mdf.modal.phi is None:
             self.mdf.modal.modal_analysis()
 
-        if not 1 <= mode_number <= self.mdf.modal.phi.shape[1]:
-            raise ValueError(
-                f"Invalid mode number. Must be between 1 and {self.mdf.modal.phi.shape[1]}."
+        max_mode = self.mdf.modal.phi.shape[1]
+        for mn in mode_number:
+            if not 1 <= mn <= max_mode:
+                raise ValueError(
+                    f"Invalid mode number: {mn}. Must be between 1 and {max_mode}."
+                )
+
+        num_modes_to_plot = len(mode_number)
+
+        fig, axes = plt.subplots(
+            1, num_modes_to_plot, figsize=(5 * num_modes_to_plot, 6), squeeze=False
+        )
+        axes = axes.flatten()
+
+        for i, mn in enumerate(mode_number):
+            omega = self.mdf.modal.omega[mn - 1]
+            mode_shape_vector = self.mdf.modal.phi[:, mn - 1]
+            norm_factor = np.max(np.abs(mode_shape_vector))
+            normalized_shape = (
+                mode_shape_vector / norm_factor
+                if norm_factor != 0
+                else mode_shape_vector
             )
 
-        mode_shape_vector = self.mdf.modal.phi[:, mode_number - 1]
+            ax = axes[i]
+            self._plot_displaced_shape(
+                ax,
+                normalized_shape,
+                title=f"Mode {mn}",
+            )
+            text_str = rf"$\omega_{mn}$ = {omega:.2f} rad/s"
+            ax.text(
+                0.05,
+                0.95,
+                text_str,
+                transform=ax.transAxes,
+                fontsize=10,
+                verticalalignment="top",
+                bbox=dict(boxstyle="round", facecolor="white", alpha=0.7),
+            )
+            # ax.set_xlabel("Normalized Displacement")
 
-        # Normalize for plotting
-        normalized_shape = mode_shape_vector / np.max(np.abs(mode_shape_vector))
-
-        fig, ax = plt.subplots()
-        self._plot_displaced_shape(
-            ax,
-            normalized_shape,
-            title=f"Mode Shape {mode_number}",
-        )
-        ax.set_xlabel("Displacement")
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.show()
 
     def animate_response(
         self,
         response_df,
-        scale_factor=20.0,
+        scale_factor=20,
         ground_motion=None,
         speed_up=1.0,
         repeat=True,
@@ -143,8 +186,8 @@ class ShearBuildingVisualizer:
         ----------
         response_df : pandas.DataFrame
             The response DataFrame, as returned by a solver like `find_response`.
-        scale_factor : float, optional
-            A factor to scale the displacements for better visualization, by default 20.0.
+        scale_factor : int, optional
+            A factor to scale the displacements for better visualization, by default 20.
         ground_motion : tuple, optional
             A tuple `(time, acceleration)` for the ground motion history. If provided,
             a plot of the ground motion will be shown below the building animation.
@@ -169,14 +212,14 @@ class ShearBuildingVisualizer:
             gm_time, gm_acc = ground_motion
             ax_gm.plot(gm_time, gm_acc, "k-")
             ax_gm.set_xlabel("Time (s)")
-            ax_gm.set_ylabel("Ground Accel.")
+            ax_gm.set_ylabel("Ground Acc. (g)")
             ax_gm.grid(True)
             (time_marker,) = ax_gm.plot([], [], "r-", lw=2)  # The vertical line
         else:
             fig, ax_build = plt.subplots(figsize=(8, 6))
-            ax_build.set_xlabel(
-                "Displacement"
-            )  # Only add xlabel if no ground motion plot
+            # ax_build.set_xlabel(
+            #     "Displacement"
+            # )  # Only add xlabel if no ground motion plot
 
         # The override should be scaled to match the scaled displacements
         max_abs_disp = np.max(np.abs(displacements)) * scale_factor
@@ -194,7 +237,7 @@ class ShearBuildingVisualizer:
             self._plot_displaced_shape(
                 ax_build,
                 current_displacements_scaled,
-                title=f"Displacements x{scale_factor}",
+                title=f"Deformed shape (SF = {scale_factor})",
                 max_disp_override=max_abs_disp,
             )
 

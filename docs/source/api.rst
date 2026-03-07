@@ -36,6 +36,14 @@ Numerical Methods
    :undoc-members:
    :show-inheritance:
 
+Visualization (SDF)
+^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: structdyn.sdf.sdf_helpers.visualization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Ground Motion
 --------------
 
@@ -92,6 +100,14 @@ Numerical Methods
    :show-inheritance:
 
 .. automodule:: structdyn.mdf.numerical_methods.newmark_beta_non_linear
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Visualization (MDF)
+^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: structdyn.mdf.mdf_helpers.visualization
    :members:
    :undoc-members:
    :show-inheritance:

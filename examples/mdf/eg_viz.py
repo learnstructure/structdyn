@@ -15,7 +15,7 @@ shear_building.plot.structure()
 # # 3. Perform modal analysis and plot a mode shape
 # # This calculates the modes and then plots the second mode shape.
 shear_building.modal.modal_analysis()
-shear_building.plot.mode_shape(mode_number=3)
+shear_building.plot.mode_shape(mode_number=[1, 2, 3])
 
 # # 4. Simulate a dynamic response
 # # For example, let's apply a simple sinusoidal ground motion.
@@ -30,7 +30,7 @@ response = shear_building.find_response_ground_motion(gm)
 # anim = shear_building.plot.animate_response(response)
 anim = shear_building.plot.animate_response(
     response,
-    scale_factor=20.0,  # Increased scale factor for clarity
+    scale_factor=20,  # Increased scale factor for clarity
     ground_motion=(gm.time, gm.acc_g),
     # save_path="building_response.mp4",  # <-- to save animation, you need to have ffmpeg installed and uncomment this line
 )

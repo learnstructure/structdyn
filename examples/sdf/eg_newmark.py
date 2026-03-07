@@ -17,3 +17,5 @@ responses = sdf.find_response(
 )
 print(responses)
 print(responses["displacement"][10])  # result is -0.03391195470077432
+
+# sdf.plot.animate_response(responses, scale_factor=10)

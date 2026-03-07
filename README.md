@@ -21,6 +21,11 @@ See the documentation here: [![Documentation Status](https://readthedocs.org/pro
 *   **Response History Analysis:** Perform linear and non-linear time history analysis using direct integration.
 *   **Response Spectrum Analysis (RSA):** Estimate peak responses using modal combination methods (SRSS).
 
+**Visualization:**
+
+*   **Animated Responses:** Animate the dynamic response of both SDF and MDF systems to visualize structural behavior over time.
+*   **Mode Shapes:** Plot the mode shapes of MDF systems to understand their vibrational characteristics.
+
 **Non-Linear Analysis:**
 
 *   **Material Models:** A library of hysteretic material models, including elastic perfectly plastic, bilinear, Bouc-Wen & Ramberg-Osgood model.

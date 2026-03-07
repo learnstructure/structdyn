@@ -1,6 +1,7 @@
 import numpy as np
 from structdyn.utils.material_models import LinearElastic
 from structdyn.ground_motions import GroundMotion
+from structdyn.sdf.sdf_helpers.visualization import SDFVisualizer
 
 
 class SDF:
@@ -35,6 +36,7 @@ class SDF:
             self.fd = "linear"
         else:
             self.fd = fd
+        self._plot = None  # Placeholder for the visualizer, will be set when accessed
 
     def find_response(self, time, load, method="newmark_beta", **kwargs):
         """
@@ -119,3 +121,18 @@ class SDF:
             f"Invalid method '{method}'. "
             "Choose 'newmark_beta', 'central_difference', or 'interpolation'."
         )
+
+    @property
+    def plot(self):
+        """
+        Provides access to visualization methods for the SDF system.
+
+        Returns
+        -------
+        SDFVisualizer
+            An instance of the SDFVisualizer class, which can be used to generate
+            plots and animations of the system.
+        """
+        if self._plot is None:
+            self._plot = SDFVisualizer(self)
+        return self._plot
