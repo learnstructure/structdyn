@@ -182,23 +182,30 @@ print(responses["displacement"][10])  # result is 0.03606328101158249
 
 </details>
 
+
+## Validated Examples
+
+For more detailed examples, including animations and advanced use cases, please see the `examples` directory in the repository.
+
+[**Browse the examples folder**](./examples)
+
 ## Citing `structdyn`
 
 If you use `structdyn` in your research or work, please cite it as follows:
 
-> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis. (Version 0.5.1) [Computer software]. https://github.com/learnstructure/structdyn.git
+> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis (Version 0.7.4) [Computer software]. https://doi.org/10.5281/zenodo.18676816
 
 Here is the citation in BibTeX format: 
 
 ```bibtex
 @software{Mandal_structdyn_2026,
   author = {Mandal, Abinash},
-  title = {{StructDyn: An open-source Python library for structural dynamics analysis.}},
-  version = {0.5.1},
+  title = {{StructDyn: An open-source Python library for structural dynamics analysis}},
+  version = {0.7.4},
   year = {2026},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  url = {https://github.com/learnstructure/structdyn.git}
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.18676816},
+  url = {https://doi.org/10.5281/zenodo.18676816}
 }
 ```
 
