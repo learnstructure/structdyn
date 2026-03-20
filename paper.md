@@ -19,8 +19,7 @@ tags:
 ---
 
 # Summary
-
-StructDyn is an open‑source Python library for performing structural dynamics analysis using numerical methods. It provides a simple, accessible, and transparent framework for modeling and analyzing the dynamic response of Single‑Degree‑of‑Freedom (SDF) and Multi‑Degree‑of‑Freedom (MDF) systems. The library features a comprehensive suite of numerical integration methods (central difference, Newmark‑Beta, and linear interpolation), tools for modal analysis, and utilities for handling earthquake ground motion data, including direct support for the PEER NGA‑West2 format. Its design prioritizes clarity and ease of use, with implementations that closely follow the algorithms presented in foundational textbooks such as Chopra’s *Dynamics of Structures* [@Chopra2020]. The library is thoroughly tested against examples from the book, making it an ideal tool for teaching, self‑learning, and research in structural and earthquake engineering.
+StructDyn is an open‑source Python library for performing structural dynamics analysis using numerical methods. It provides a simple, accessible, and transparent framework for modeling and analyzing the dynamic response of Single‑Degree‑of‑Freedom (SDF) and Multi‑Degree‑of‑Freedom (MDF) systems, both linear and non-linear. The library features a comprehensive suite of numerical integration methods (central difference, Newmark‑Beta, and linear interpolation), tools for modal analysis, and utilities for handling earthquake ground motion data, including direct support for the PEER NGA‑West2 format. Its design prioritizes clarity and ease of use, with implementations that closely follow the algorithms presented in foundational textbooks such as Chopra’s *Dynamics of Structures* [@Chopra2020]. The library is thoroughly tested against examples from the book, making it an ideal tool for teaching, self‑learning, and research in structural and earthquake engineering. The modularity of the library allows to integrate finite element method libraries to perform analysis on general structures with known mass and stiffness matrix.
 
 # Statement of Need
 
@@ -28,14 +27,20 @@ The study of structural dynamics is fundamental to civil, mechanical, and aerosp
 
 StructDyn addresses this gap by providing a **transparent**, **well‑documented**, and **easy‑to‑use** Python implementation of the core methods in structural dynamics. Its modular, object‑oriented design allows users to easily inspect the source code, modify existing components, or extend its functionality with new numerical methods or material models. This makes it an ideal pedagogical tool for teaching the principles of structural dynamics and a convenient workbench for researchers to test new ideas on simple, well‑defined systems before moving to more complex models. By focusing on clarity and ease of use, StructDyn lowers the barrier to computational structural dynamics, enabling a wider audience to explore and apply these critical engineering principles.
 
-# Functionality and Design
 
-StructDyn is organized into several core modules that reflect its key capabilities:
+# State of the Field
 
-*   **Single-Degree-of-Freedom (SDF) Systems:** The `sdf` module allows users to define an `SDF` by specifying mass, stiffness, and damping. It supports both analytical solutions for classical cases (e.g., free vibration, harmonic loading) and numerical solutions for arbitrary dynamic loading using interpolation, central difference, or Newmark‑Beta methods.
-*   **Multi-Degree-of-Freedom (MDF) Systems:** The `mdf` module enables the creation of an `MDF` object from mass and stiffness matrices. It includes a `ModalAnalysis` class to compute natural frequencies and mode shapes. Time‑history solutions can be obtained in either modal or spatial coordinates. Damping can be built from modal damping ratios or defined directly.
-*   **Numerical Solvers:** A suite of well‑established methods is provided: `central difference` (explicit), `Newmark‑Beta` (with average or linear acceleration), and a `linear interpolation` method for SDF systems. These solvers are implemented step‑by‑step following the formulations in Chopra’s textbook [@Chopra2020]. For large MDF systems, modal superposition can be used to reduce computational cost.
-*   **Ground Motion Handling:** The `ground_motions` module provides tools to load, scale, and process earthquake records. It includes support for the common PEER NGA-West2 format, a widely used database in earthquake engineering [@Ancheta2014]. This allows for straightforward analysis of structural response to seismic events.
+The field of structural analysis is dominated by powerful, feature-rich finite element analysis (FEA) software such as SAP2000, ETABS, and the open-source framework OpenSees. While these tools are industry standards for complex, large-scale modeling, `structdyn` occupies a distinct and complementary niche. It is not intended to replace these comprehensive FEA packages, but rather to provide a more accessible, scriptable environment for fundamental structural dynamics analysis, preliminary design, and education. While OpenSees is unparalleled for detailed finite element analysis of complex structures, `structdyn` prioritizes simplicity and transparency, making it ideal for teaching fundamental concepts and rapidly prototyping new algorithms. Its Python-based nature allows for easy integration into larger computational workflows, which is often cumbersome with compiled, standalone software.
+
+
+# Software Design
+
+`structdyn` is designed with an intuitive object-oriented architecture. The primary components are the `SDF` and `MDF` classes, which encapsulate the properties and methods for single and multi-degree-of-freedom systems, respectively.
+
+- **Modularity:** The library is organized into logical modules. For instance, `MDF` systems can be easily created from shear building properties. Modal analysis is handled by a dedicated `modal` submodule. Numerical solvers, ground motion tools, and visualization are all implemented as distinct, well-defined components.
+- **Dependencies:** `structdyn` is built upon the standard scientific Python stack, leveraging `numpy` [@numpy] for numerical operations, `scipy` [@scipy] for core scientific computing algorithms (including its equation solvers), and `pandas` for data management. Plots and animations are generated using `matplotlib` [@matplotlib].
+- **Extensibility:** The modular design makes the library easy to extend. For example, users can define custom non-linear material models or implement new numerical integration schemes.
+- **Visualization:** A key design choice was to tightly integrate visualization with the analysis objects. The `plot` attribute on `MDF` objects provides direct access to visualization methods for mode shapes and animated responses, making the interpretation of results seamless.
 
 ## Example Usage
 
@@ -59,13 +64,25 @@ rs = ResponseSpectrum(periods, 0.02, gm)
 
 # Analysis
 spectra = rs.compute()
-print(spectra["Sd"][20])  # result is 0.1896749378231744
+print(spectra["Sd"][20])  # result is 0.189675
 ```
 
 This focus on simplicity and transparency makes structdyn a valuable asset for both educational and research purposes.
 
+# Research Impact
+
+`structdyn` is a valuable tool for both education and research in structural engineering.
+
+- **Educational Tool:** Its simple API and visualization capabilities make it an excellent tool for teaching and learning the fundamental concepts of structural dynamics. Students can easily explore the effects of changing mass, stiffness, or damping on a structure's response.
+- **Research Platform:** For researchers, `structdyn` provides a platform for conducting parametric studies, validating new analytical models, and performing preliminary analyses that can inform more detailed FEA modeling. Because it is open-source and scriptable, it promotes reproducible and transparent research workflows.
+- **Preliminary Design:** Practicing engineers can use `structdyn` to quickly evaluate the dynamic performance of different design alternatives in the early stages of a project.
+
+# Artificial Intelligence (AI) Usage
+
+The author acknowledges the use of Large Language Models, including OpenAI's ChatGPT, DeepSeek, and Google's Gemini, for assistance with code cleaning, documentation, and manuscript editing. All AI-assisted content was reviewed, edited, and validated by the author for accuracy and clarity.
+
 # Acknowledgements
 
-This work relies on the foundational numerical libraries that underpin the scientific Python ecosystem, namely NumPy [@numpy], SciPy [@scipy], Pandas [@pandas], and Matplotlib [@matplotlib]. Acknowledgment is also made to the Pacific Earthquake Engineering Research (PEER) Center for making the NGA-West2 ground motion database available. Additionally, the author acknowledges the use of Large Language Models, including OpenAI's ChatGPT, DeepSeek, and Google's Gemini, for assistance with code cleaning, documentation, and manuscript editing. No specific funding was received for this work.
+This work relies on the foundational numerical libraries that underpin the scientific Python ecosystem, namely NumPy [@numpy], SciPy [@scipy], Pandas [@pandas], and Matplotlib [@matplotlib]. Acknowledgment is also made to the Pacific Earthquake Engineering Research (PEER) Center for making the NGA-West2 ground motion database available. No specific funding was received for this work.
 
 # References
