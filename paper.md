@@ -77,7 +77,7 @@ This focus on simplicity and transparency makes structdyn a valuable asset for b
 - **Research Platform:** For researchers, `structdyn` provides a platform for conducting parametric studies, validating new analytical models, and performing preliminary analyses that can inform more detailed FEA modeling. Because it is open-source and scriptable, it promotes reproducible and transparent research workflows.
 - **Preliminary Design:** Practicing engineers can use `structdyn` to quickly evaluate the dynamic performance of different design alternatives in the early stages of a project.
 
-# Artificial Intelligence (AI) Usage
+# AI usage disclosure
 
 The author acknowledges the use of Large Language Models, including OpenAI's ChatGPT, DeepSeek, and Google's Gemini, for assistance with code cleaning, documentation, and manuscript editing. All AI-assisted content was reviewed, edited, and validated by the author for accuracy and clarity.
 
