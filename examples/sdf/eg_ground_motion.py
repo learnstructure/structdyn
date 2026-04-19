@@ -1,7 +1,8 @@
 import numpy as np
-from structdyn.ground_motions.ground_motion import GroundMotion
-from structdyn.utils.helpers import elcentro_chopra
-from pathlib import Path
+from structdyn import GroundMotion, elcentro_chopra
+
+# from structdyn.ground_motions.ground_motion import GroundMotion
+# from structdyn.utils.helpers import elcentro_chopra
 
 # Method 1: directly from Chopra's book- Appendix 6
 elc = elcentro_chopra()

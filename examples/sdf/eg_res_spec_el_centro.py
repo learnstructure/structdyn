@@ -1,8 +1,6 @@
 # Section 6.4 (& Figure 6.6.2); Chopra A. K., Dynamics of structure, 5th edn
 import numpy as np
-from structdyn.ground_motions.ground_motion import GroundMotion
-from structdyn.sdf.response_spectrum import ResponseSpectrum
-from structdyn.utils.helpers import elcentro_chopra
+from structdyn import GroundMotion, ResponseSpectrum, elcentro_chopra
 
 # Define el centro ground motion from Chopra's book- Appendix 6
 elc = elcentro_chopra()

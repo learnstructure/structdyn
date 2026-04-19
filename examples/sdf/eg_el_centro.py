@@ -1,10 +1,11 @@
 # Section 6.4 (& Figure 6.4.1a); Chopra A. K., Dynamics of structure, 5th edn
 from urllib import response
 
-from structdyn import SDF
+from structdyn import SDF, GroundMotion, elcentro_chopra
 import numpy as np
-from structdyn.ground_motions.ground_motion import GroundMotion
-from structdyn.utils.helpers import elcentro_chopra
+
+# from structdyn.ground_motions.ground_motion import GroundMotion
+# from structdyn.utils.helpers import elcentro_chopra
 
 # Define el centro ground motion from Chopra's book- Appendix 6
 elc = elcentro_chopra()

@@ -1,7 +1,7 @@
 # Example 5.5; Chopra A. K., Dynamics of structure, 5th edn
 from structdyn import SDF
 import numpy as np
-from structdyn.utils.material_models import ElasticPerfectlyPlastic
+from structdyn.utils import ElasticPerfectlyPlastic
 
 # Define external load
 dt = 0.1

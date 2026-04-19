@@ -1,6 +1,7 @@
-from structdyn import SDF
+from structdyn import SDF, AnalyticalResponse
 import matplotlib.pyplot as plt
-from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
+
+# from structdyn.sdf.analytical_methods.analytical_response import AnalyticalResponse
 
 # Create SDF object
 sdf = SDF(m=1.0, k=100.0, ji=0.05)

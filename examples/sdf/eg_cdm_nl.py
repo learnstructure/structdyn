@@ -2,12 +2,14 @@
 from structdyn import SDF
 import numpy as np
 import matplotlib.pyplot as plt
-from structdyn.utils.material_models import (
-    LinearElastic,
-    ElasticPerfectlyPlastic,
-    Bilinear,
-    BoucWen,
-)
+
+# from structdyn.utils.material_models import (
+#     LinearElastic,
+#     ElasticPerfectlyPlastic,
+#     Bilinear,
+#     BoucWen,
+# )
+from structdyn.utils import ElasticPerfectlyPlastic
 
 # Define external load
 dt = 0.1
