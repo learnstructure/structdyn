@@ -1,4 +1,10 @@
 # Structural Dynamics Library (`structdyn`)
+
+[![PyPI version](https://img.shields.io/pypi/v/structdyn)](https://pypi.org/project/structdyn)
+[![Downloads](https://static.pepy.tech/badge/structdyn)](https://pepy.tech/project/structdyn)
+[![GitHub repo](https://img.shields.io/badge/GitHub-structdyn-blue?logo=github)](https://github.com/learnstructure/structdyn)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 An open-source Python library for structural dynamics analysis
 
 **structdyn** is a Python package for performing structural dynamics and earthquake engineering analysis of Single-Degree-of-Freedom (SDF) and Multi-Degree-of-Freedom (MDF) systems. It provides a suite of tools for analyzing both linear and non-linear behavior, making it a versatile library for students, faculties and researchers.
@@ -193,7 +199,7 @@ For more detailed examples, including animations and advanced use cases, please 
 
 If you use `structdyn` in your research or work, please cite it as follows:
 
-> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis (Version 0.7.4) [Computer software]. https://doi.org/10.5281/zenodo.18676816
+> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis (Version 0.7.6) [Computer software]. https://doi.org/10.5281/zenodo.18676816
 
 Here is the citation in BibTeX format: 
 
