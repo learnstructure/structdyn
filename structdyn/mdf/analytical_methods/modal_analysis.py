@@ -47,8 +47,21 @@ class ModalAnalysis:
         phi : ndarray
             Mode shape matrix (columns are modes)
         """
+        M = self.mdf.M.copy()
+        K = self.mdf.K.copy()
 
-        eigenvals, eigenvecs = eigh(self.mdf.K, self.mdf.M)
+        diag_M = np.diag(M)
+        if np.any(diag_M <= 0):
+            max_m = np.max(diag_M)
+            eps = 1e-9 * max_m if max_m > 0 else 1e-9
+            M += eps * np.eye(M.shape[0])
+
+        try:
+            eigenvals, eigenvecs = eigh(K, M)
+        except np.linalg.LinAlgError:
+            max_m = np.max(np.diag(self.mdf.M))
+            eps = 1e-8 * max_m if max_m > 0 else 1e-8
+            eigenvals, eigenvecs = eigh(K, self.mdf.M + eps * np.eye(K.shape[0]))
 
         # Remove small negative numerical values
         eigenvals = np.real(eigenvals)

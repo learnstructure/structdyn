@@ -133,6 +133,38 @@ class MDF:
         instance.stiffnesses = stiffnesses
         return instance
 
+    @classmethod
+    def from_fem2d(cls, structure, zeta=None, n_modes=None):
+        """
+        Creates an MDF system directly from a fem2d Structure object (linear or non-linear).
+
+        Parameters
+        ----------
+        structure : fem2d.Structure
+            The fem2d structure.
+        zeta : float or list of float, optional
+            Modal damping ratio(s).
+        n_modes : int, optional
+            Number of modes for damping matrix calculation.
+        """
+        structure.number_dofs()
+        structure.apply_boundary_conditions()
+        K_ff, M_ff = structure.get_reduced_matrices()
+
+        instance = cls(M=M_ff, K=K_ff, elements=structure)
+        instance.structure = structure
+
+        if zeta is not None:
+            if isinstance(zeta, (int, float)):
+                n = len(structure.free_dofs)
+                if n_modes is not None:
+                    n = min(n, n_modes)
+                zeta = [float(zeta)] * n
+            instance.set_modal_damping(zeta, n_modes=n_modes)
+
+        return instance
+    
+
     def find_response(
         self, time, load, method="central_difference", elements=None, **kwargs
     ):
@@ -171,9 +203,18 @@ class MDF:
         if elements is not None:
             self.elements = elements
 
+        is_fem2d_structure = False
+        from fem2d.structure import Structure
+        if isinstance(self.elements, Structure) or (hasattr(self, "structure") and isinstance(self.structure, Structure)):
+            is_fem2d_structure = True
+
+        if method == "central_difference" and (self.elements is not None or is_fem2d_structure):
+            # Fall back to newmark_beta for non-linear or fem2d structure dynamics
+            method = "newmark_beta"
+
         # Determine solver class based on method and nonlinearity
         if method == "newmark_beta":
-            if self.elements is not None:
+            if self.elements is not None or is_fem2d_structure:
                 from structdyn.mdf.numerical_methods.newmark_beta_non_linear import (
                     NewmarkBetaNonLinear,
                 )
@@ -225,7 +266,14 @@ class MDF:
         time = np.asarray(gm.time)
         ag = np.asarray(gm.acc_g) * 9.81  # convert to m/s²
         if inf_vec is None:
-            inf_vec = np.ones(self.ndof)
+            if hasattr(self, "structure") and self.structure is not None:
+                # Default influence vector: 1 for horizontal (ux) DOFs, 0 for vertical (uy) and rotational (rz) DOFs
+                inf_vec = np.zeros(self.ndof)
+                for i, dof_idx in enumerate(self.structure.free_dofs):
+                    if dof_idx % 3 == 0:  # ux degree of freedom
+                        inf_vec[i] = 1.0
+            else:
+                inf_vec = np.ones(self.ndof)
         inf_vec = np.asarray(inf_vec)
         if inf_vec.shape != (self.ndof,):
             raise ValueError("inf_vec must have shape (ndof,)")
@@ -260,26 +308,49 @@ class MDF:
         Kt : np.ndarray
             The global tangent stiffness matrix.
         """
+        from fem2d.structure import Structure
+
+        struct = None
+        if isinstance(self.elements, Structure):
+            struct = self.elements
+        elif hasattr(self, "structure") and isinstance(self.structure, Structure):
+            struct = self.structure
+
+        if struct is not None:
+            d = np.zeros(struct.neq)
+            d[struct.free_dofs] = u
+            f_int = np.zeros(struct.neq)
+            Kt = np.zeros((struct.neq, struct.neq))
+            for el in struct.elements.values():
+                if hasattr(el, "update_state"):
+                    el.update_state(d)
+                dofs = el.node_i.dofs + el.node_j.dofs
+                f_int[dofs] += el.get_internal_forces()
+                Kt[np.ix_(dofs, dofs)] += el.get_tangent_stiffness()
+            return f_int[struct.free_dofs], Kt[np.ix_(struct.free_dofs, struct.free_dofs)]
+
         Fs = np.zeros(self.ndof)
         Kt = np.zeros((self.ndof, self.ndof))
-        for elem in self.elements:
-            fe, ke = elem.get_force_and_stiffness(u, v, dt)
-            dofs = elem.dofs
-            if len(dofs) == 1:
-                # Base story
-                Fs[dofs[0]] += fe
-                Kt[dofs[0], dofs[0]] += ke
-            elif len(dofs) == 2:
-                # Interior story
-                i, j = dofs
-                Fs[i] -= fe
-                Fs[j] += fe
-                Kt[i, i] += ke
-                Kt[i, j] -= ke
-                Kt[j, i] -= ke
-                Kt[j, j] += ke
-            else:
-                raise ValueError("Element must have 1 or 2 DOFs")
+        if self.elements is not None:
+            for elem in self.elements:
+                fe, ke = elem.get_force_and_stiffness(u, v, dt)
+                dofs = elem.dofs
+                if len(dofs) == 1:
+                    Fs[dofs[0]] += fe
+                    Kt[dofs[0], dofs[0]] += ke
+                elif len(dofs) == 2:
+                    i, j = dofs
+                    Fs[i] -= fe
+                    Fs[j] += fe
+                    Kt[i, i] += ke
+                    Kt[i, j] -= ke
+                    Kt[j, i] -= ke
+                    Kt[j, j] += ke
+                else:
+                    raise ValueError("Element must have 1 or 2 DOFs")
+        else:
+            Fs = self.K @ u
+            Kt = self.K
         return Fs, Kt
 
     def commit_elements(self, u):
@@ -296,9 +367,25 @@ class MDF:
         u : np.ndarray
             The converged displacement vector for the time step.
         """
-        if self.elements is not None:
+        from fem2d.structure import Structure
+
+        struct = None
+        if isinstance(self.elements, Structure):
+            struct = self.elements
+        elif hasattr(self, "structure") and isinstance(self.structure, Structure):
+            struct = self.structure
+
+        if struct is not None:
+            d = np.zeros(struct.neq)
+            d[struct.free_dofs] = u
+            for el in struct.elements.values():
+                if hasattr(el, "update_state"):
+                    el.update_state(d)
+            struct.commit_state()
+        elif self.elements is not None:
             for elem in self.elements:
-                elem.commit(u)
+                if hasattr(elem, "commit"):
+                    elem.commit(u)
 
     @property
     def plot(self):

@@ -95,7 +95,12 @@ class NewmarkBetaNonLinear:
         # Commit initial state (if nonlinear)
         if hasattr(self.system, "commit_elements"):
             self.system.commit_elements(u[0])
-        a[0] = np.linalg.solve(self.system.M, p[0] - self.system.C @ v[0] - Fs0)
+        M_eff = self.system.M.copy()
+        if np.any(np.diag(M_eff) <= 0):
+            max_m = np.max(np.diag(M_eff))
+            eps = 1e-9 * max_m if max_m > 0 else 1e-9
+            M_eff += eps * np.eye(ndof)
+        a[0] = np.linalg.solve(M_eff, p[0] - self.system.C @ v[0] - Fs0)
         fs_hist[0] = Fs0
 
         # Check for stability
