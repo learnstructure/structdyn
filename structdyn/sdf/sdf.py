@@ -114,8 +114,8 @@ class SDF:
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
         # Effective force for an SDF system subject to ground acceleration:
-        # p(t) = -m * a_g(t) * g
-        p = -self.m * np.asarray(gm.acc_g, dtype=float) * 9.81
+        # p(t) = -m * a_g(t)
+        p = -self.m * np.asarray(gm.acceleration, dtype=float)
         load = LoadHistory(np.asarray(gm.time, dtype=float), p)
 
         return self.find_response(load, method=method, **kwargs)

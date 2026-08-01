@@ -295,7 +295,7 @@ class MDF:
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
         time = np.asarray(gm.time)
-        ag = np.asarray(gm.acc_g) * 9.81  # convert to m/s²
+        ag = np.asarray(gm.acceleration, dtype=float)
         if inf_vec is None:
             if hasattr(self, "structure") and self.structure is not None:
                 # Default influence vector: 1 for horizontal (ux) DOFs, 0 for vertical (uy) and rotational (rz) DOFs

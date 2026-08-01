@@ -15,7 +15,10 @@ class GroundMotion:
     Attributes
     ----------
     acc_g : numpy.ndarray
-        The acceleration time history in units of g (acceleration due to gravity).
+        The acceleration time history in the input units (commonly g).
+    scale_factor : float
+        Conversion factor applied to ``acc_g`` when the physical acceleration is
+        needed for response analysis.
     dt : float
         The time step of the acceleration data.
     time : numpy.ndarray
@@ -26,31 +29,40 @@ class GroundMotion:
         The component of the ground motion (e.g., 'h1', 'h2', 'v').
     """
 
-    def __init__(self, acc_g, dt, name=None, component=None):
+    def __init__(self, acc_g, dt, name=None, component=None, scale_factor=9.81):
         """Initializes the GroundMotion object.
 
         Parameters
         ----------
         acc_g : array-like
-            Acceleration time history in units of g.
+            Acceleration time history in the input units (commonly g).
         dt : float
             Time step of the acceleration data.
         name : str, optional
             Name of the ground motion event, by default None.
         component : str, optional
             Component of the ground motion, by default None.
+        scale_factor : float, optional
+            Conversion factor applied to ``acc_g`` when computing the physical
+            acceleration used in response analysis. The default is 9.81.
         """
-        self.acc_g = np.asarray(acc_g)
+        self.acc_g = np.asarray(acc_g, dtype=float)
         self.dt = float(dt)
-        self.time = np.arange(len(acc_g)) * dt
+        self.time = np.arange(len(self.acc_g)) * dt
 
         self.name = name
         self.component = component
+        self.scale_factor = float(scale_factor)
 
     # ---------- Constructors ----------
 
+    @property
+    def acceleration(self):
+        """Return the acceleration history in physical units."""
+        return self.acc_g * self.scale_factor
+
     @classmethod
-    def from_at2(cls, file_path):
+    def from_at2(cls, file_path, scale_factor=9.81):
         """Creates a GroundMotion object from a PEER NGA (AT2) file.
 
         Parameters
@@ -65,10 +77,10 @@ class GroundMotion:
         """
         file_path = Path(file_path)
         acc, dt = cls._read_at2(file_path)
-        return cls(acc, dt, name=file_path.stem)
+        return cls(acc, dt, name=file_path.stem, scale_factor=scale_factor)
 
     @classmethod
-    def from_event(cls, event_name, component="hor1", base_dir=None):
+    def from_event(cls, event_name, component="hor1", base_dir=None, scale_factor=9.81):
         """Loads a ground motion from the built-in event database.
 
         Parameters
@@ -108,10 +120,16 @@ class GroundMotion:
         selected = cls._select_component(files, component)
         acc, dt = cls._read_at2(selected)
 
-        return cls(acc, dt, name=event_name, component=component)
+        return cls(
+            acc,
+            dt,
+            name=event_name,
+            component=component,
+            scale_factor=scale_factor,
+        )
 
     @classmethod
-    def from_arrays(cls, acc_g, dt, name="user_motion"):
+    def from_arrays(cls, acc_g, dt, name="user_motion", scale_factor=9.81):
         """Creates a GroundMotion object directly from arrays.
 
         Parameters
@@ -128,7 +146,7 @@ class GroundMotion:
         GroundMotion
             A new GroundMotion instance.
         """
-        return cls(acc_g, dt, name=name)
+        return cls(acc_g, dt, name=name, scale_factor=scale_factor)
 
     # ---------- Utilities ----------
 

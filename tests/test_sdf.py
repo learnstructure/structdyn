@@ -24,6 +24,20 @@ def test_sdf_initialization():
     assert sdf.c == pytest.approx(2 * 1000 * np.sqrt(10) * 0.05)
 
 
+def test_ground_motion_scale_factor_is_used_in_response_analysis():
+    """A custom scale factor should change the response proportionally."""
+    gm_si = GroundMotion.from_arrays([0.0, 1.0, 0.0, -1.0], 0.1, scale_factor=1.0)
+    gm_g = GroundMotion.from_arrays([0.0, 1.0, 0.0, -1.0], 0.1, scale_factor=9.81)
+
+    sdf = SDF(1.0, 100.0, 0.05)
+    response_si = sdf.find_response_ground_motion(gm_si, method="interpolation")
+    response_g = sdf.find_response_ground_motion(gm_g, method="interpolation")
+
+    assert response_si["displacement"].iloc[1] == pytest.approx(
+        response_g["displacement"].iloc[1] / 9.81, rel=1e-8
+    )
+
+
 def test_example_5_1_interpolation():
     """
     Example 5.1: Linear SDF, interpolation method.
