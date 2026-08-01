@@ -1,6 +1,7 @@
 import numpy as np
 from structdyn.utils.material_models import LinearElastic
 from structdyn.ground_motions import GroundMotion
+from structdyn.loads import LoadHistory
 from structdyn.sdf.sdf_helpers.visualization import SDFVisualizer
 
 
@@ -38,7 +39,7 @@ class SDF:
             self.fd = fd
         self._plot = None  # Placeholder for the visualizer, will be set when accessed
 
-    def find_response(self, time, load, method="newmark_beta", **kwargs):
+    def find_response(self, load, method="newmark_beta", **kwargs):
         """
         Computes the dynamic response of the SDF system.
 
@@ -46,13 +47,13 @@ class SDF:
 
         Parameters
         ----------
-        time : array-like
-            Array of time points.
-        load : array-like
-            Array of generalized force values at each time point.
+        load : LoadHistory
+            A :class:`~structdyn.loads.LoadHistory` bundling the time
+            discretization and the force values to apply to the system.
         method : str, optional
-            Numerical method for solving the equation of motion, by default "newmark_beta".
-            Available methods: 'newmark_beta', 'central_difference', 'interpolation'.
+            Numerical method for solving the equation of motion, by default
+            "newmark_beta". Available methods: 'newmark_beta',
+            'central_difference', 'interpolation'.
         **kwargs : dict, optional
             Additional parameters for the numerical solver.
 
@@ -61,16 +62,34 @@ class SDF:
         pandas.DataFrame
             A DataFrame containing the time history of the system's response
             (e.g., displacement, velocity, acceleration).
+
+        Notes
+        -----
+        The previous ``find_response(time, load_values, ...)`` style — where
+        the time vector and the force array were passed as separate
+        arguments — has been removed. Build a :class:`~structdyn.loads.LoadHistory`
+        instead and pass it as the single argument:
+
+        >>> from structdyn.loads import LoadHistory
+        >>> load = LoadHistory(time_steps=t, load_values=p)
+        >>> sdf.find_response(load, method="newmark_beta")
         """
-        time = np.asarray(time)
-        dt = time[1] - time[0]
-        if not np.allclose(np.diff(time), dt):
-            raise ValueError("Time vector must be uniformly spaced")
+        if not isinstance(load, LoadHistory):
+            raise TypeError(
+                "find_response expects a LoadHistory as its first argument. "
+                "Build one with structdyn.loads.LoadHistory(time_steps, "
+                "load_values) and pass it directly. The legacy "
+                "(time, load_values) call style has been removed."
+            )
+
+        time = load.time_steps
+        dt = load.dt
+        load_values = load.load_values
 
         solver_class = self._get_solver_class(method)
         solver = solver_class(self, dt=dt, **kwargs)
 
-        return solver.compute_solution(time, load)
+        return solver.compute_solution(time, load_values)
 
     def find_response_ground_motion(self, gm, method="newmark_beta", **kwargs):
         """
@@ -94,10 +113,12 @@ class SDF:
         """
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
-        time = gm.time
-        load = -self.m * gm.acc_g * 9.81
+        # Effective force for an SDF system subject to ground acceleration:
+        # p(t) = -m * a_g(t) * g
+        p = -self.m * np.asarray(gm.acc_g, dtype=float) * 9.81
+        load = LoadHistory(np.asarray(gm.time, dtype=float), p)
 
-        return self.find_response(time, load, method=method, **kwargs)
+        return self.find_response(load, method=method, **kwargs)
 
     def _get_solver_class(self, method):
         if method == "newmark_beta":

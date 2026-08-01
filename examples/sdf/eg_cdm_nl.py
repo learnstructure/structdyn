@@ -1,5 +1,6 @@
 # Added non-linearity to Example 5.2; Chopra A. K., Dynamics of structure, 5th edn
 from structdyn import SDF
+from structdyn.loads import LoadHistory
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,6 +18,9 @@ time_steps = np.arange(0, 1.01, dt)
 load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
 load_values[time_steps >= 0.6] = 0
 
+# Build the load history
+load = LoadHistory(time_steps, load_values)
+
 # Create SDF object with non-linear material model
 # material_model = LinearElastic(stiffness=36000 / 0.02)  # for linear analysis
 material_model = ElasticPerfectlyPlastic(uy=0.02, fy=36000)
@@ -26,8 +30,7 @@ sdf = SDF(45594, 18 * 10**5, 0.05, fd=material_model)  # for non-linear analysis
 
 # Analysis
 responses = sdf.find_response(
-    time_steps,
-    load_values,
+    load,
     method="central_difference",
 )
 print(responses)

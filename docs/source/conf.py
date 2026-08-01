@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath("../../"))
 project = "structdyn"
 copyright = "2026, Abinash Mandal"
 author = "Abinash Mandal"
-release = "0.7.6"
+release = "0.8.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

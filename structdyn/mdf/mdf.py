@@ -1,6 +1,7 @@
 import numpy as np
 from .analytical_methods.modal_analysis import ModalAnalysis
 from structdyn.ground_motions import GroundMotion
+from structdyn.loads import LoadHistory
 from structdyn.mdf.mdf_helpers.visualization import ShearBuildingVisualizer
 
 
@@ -166,39 +167,69 @@ class MDF:
     
 
     def find_response(
-        self, time, load, method="central_difference", elements=None, **kwargs
+        self, load, method="central_difference", elements=None, **kwargs
     ):
         """
         Computes the dynamic response of the system to an external force.
 
         Parameters
         ----------
-        time : array-like
-            A uniformly spaced time vector.
-        load : (nt, ndof) ndarray
-            The external force history, where `nt` is the number of time steps
-            and `ndof` is the number of degrees of freedom.
+        load : LoadHistory
+            A :class:`~structdyn.loads.LoadHistory` describing the force
+            excitation. The load can be specified in two ways:
+
+            - **Sparse form** — ``load_values`` is 1D and ``dof`` identifies
+              which DOFs receive the force. The full ``(n_t, ndof)`` matrix
+              is assembled automatically.
+            - **Full form** — ``load_values`` is a 2D ``(n_t, ndof)`` matrix
+              giving the force at every DOF at every time step.
         method : str, optional
             The numerical integration method to use.
             Options are 'central_difference' or 'newmark_beta'.
             The default is "central_difference".
+        elements : list, optional
+            Elements for non-linear analysis (unchanged).
         **kwargs :
             Additional keyword arguments to be passed to the numerical solver.
 
         Returns
         -------
         DataFrame
-            A pandas DataFrame containing the displacement, velocity, and acceleration response history.
+            A pandas DataFrame containing the displacement, velocity, and
+            acceleration response history.
+
+        Notes
+        -----
+        The previous ``find_response(time, load_2d, ...)`` style — where the
+        time vector and force matrix were passed as separate arguments — has
+        been removed. Build a :class:`~structdyn.loads.LoadHistory` and pass
+        it as the single argument. For sparse excitation:
+
+        >>> load = LoadHistory(time_steps=t, load_values=p, dof=[0])
+        >>> mdf.find_response(load, method="newmark_beta")
+
+        For full excitation (legacy behaviour):
+
+        >>> load = LoadHistory(time_steps=t, load_values=F_2d)  # F_2d: (n_t, ndof)
+        >>> mdf.find_response(load, method="newmark_beta")
         """
+        if not isinstance(load, LoadHistory):
+            raise TypeError(
+                "find_response expects a LoadHistory as its first argument. "
+                "Build one with structdyn.loads.LoadHistory(time_steps, "
+                "load_values) — optionally with dof=[...]. The legacy "
+                "(time, load_matrix) call style has been removed."
+            )
+
+        time = load.time_steps
+        dt = load.dt
+        # Expand the load into the full (n_t, ndof) force matrix
+        load_matrix = load.expand(ndof=self.ndof)
+
         from structdyn.mdf.numerical_methods.central_difference import (
             CentralDifferenceMDF,
         )
         from structdyn.mdf.numerical_methods.newmark_beta import NewmarkBetaMDF
-
-        time = np.asarray(time)
-        dt = time[1] - time[0]
-        if not np.allclose(np.diff(time), dt):
-            raise ValueError("Time vector must be uniformly spaced")
 
         if elements is not None:
             self.elements = elements
@@ -233,7 +264,7 @@ class MDF:
             raise ValueError("method must be 'central_difference' or 'newmark_beta'")
 
         solver = solver_class(self, dt, **kwargs)
-        return solver.compute_solution(time, load)
+        return solver.compute_solution(time, load_matrix)
 
     def find_response_ground_motion(
         self, gm, inf_vec=None, method="central_difference", **kwargs
@@ -280,8 +311,12 @@ class MDF:
 
         # Compute effective inertia vector M r
         Mr = self.M @ inf_vec
-        load = -ag[:, None] * Mr[None, :]
-        return self.find_response(time, load, method=method, **kwargs)
+        # Build a full (n_t, ndof) LoadHistory from the ground motion
+        # and the effective inertia vector. The 2D form is used so all
+        # DOFs receive the correct share of the inertial force.
+        full_load = -ag[:, None] * Mr[None, :]
+        load = LoadHistory(time, full_load)
+        return self.find_response(load, method=method, **kwargs)
 
     def assemble_resisting_force_and_tangent(self, u, v, dt):
         """

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from structdyn import SDF
 from structdyn.ground_motions.ground_motion import GroundMotion
+from structdyn.loads import LoadHistory
 from structdyn.sdf.response_spectrum import ResponseSpectrum
 from structdyn.utils.helpers import elcentro_chopra
 from structdyn.utils.material_models import ElasticPerfectlyPlastic
@@ -34,7 +35,8 @@ def test_example_5_1_interpolation():
     load_values[time_steps >= 0.6] = 0
 
     sdf = SDF(45594, 18 * 10**5, 0.05)
-    responses = sdf.find_response(time_steps, load_values, method="interpolation")
+    load = LoadHistory(time_steps, load_values)
+    responses = sdf.find_response(load, method="interpolation")
 
     expected = -0.034534260954800985
     assert responses["displacement"][10] == pytest.approx(expected, rel=1e-5)
@@ -51,7 +53,8 @@ def test_example_5_2_central_difference():
     load_values[time_steps >= 0.6] = 0
 
     sdf = SDF(45594, 18 * 10**5, 0.05)
-    responses = sdf.find_response(time_steps, load_values, method="central_difference")
+    load = LoadHistory(time_steps, load_values)
+    responses = sdf.find_response(load, method="central_difference")
 
     expected = -0.03812718853606678
     assert responses["displacement"][10] == pytest.approx(expected, rel=1e-5)
@@ -68,8 +71,9 @@ def test_example_5_4_newmark_linear():
     load_values[time_steps >= 0.6] = 0
 
     sdf = SDF(45594, 18 * 10**5, 0.05)
+    load = LoadHistory(time_steps, load_values)
     responses = sdf.find_response(
-        time_steps, load_values, method="newmark_beta", acc_type="linear"
+        load, method="newmark_beta", acc_type="linear"
     )
 
     expected = -0.03391195470077432
@@ -88,8 +92,9 @@ def test_example_5_5_newmark_average_nonlinear():
 
     material_model = ElasticPerfectlyPlastic(uy=0.02, fy=36000)
     sdf = SDF(45594, 18 * 10**5, 0.05, fd=material_model)
+    load = LoadHistory(time_steps, load_values)
     responses = sdf.find_response(
-        time_steps, load_values, method="newmark_beta", acc_type="average"
+        load, method="newmark_beta", acc_type="average"
     )
 
     expected = 0.03606328101158249

@@ -171,6 +171,7 @@ dt = 0.1
 time_steps = np.arange(0, 1.01, dt)
 load_values = 50 * np.sin(np.pi * time_steps / 0.6) * 1000
 load_values[time_steps >= 0.6] = 0
+load = LoadHistory(time_steps, load_values)
 
 # Create SDF object
 material_model = ElasticPerfectlyPlastic(uy=0.02, fy=36000)
@@ -178,7 +179,7 @@ sdf = SDF(45594, 18 * 10**5, 0.05, fd=material_model)
 
 # Analysis
 responses = sdf.find_response(
-    time_steps, load_values, method="newmark_beta", acc_type="average"
+    load, method="newmark_beta", acc_type="average"
 )
 
 print(responses)
@@ -207,7 +208,7 @@ Here is the citation in BibTeX format:
 @software{Mandal_structdyn_2026,
   author = {Mandal, Abinash},
   title = {{StructDyn: An open-source Python library for structural dynamics analysis}},
-  version = {0.7.4},
+  version = {0.8.0},
   year = {2026},
   publisher = {Zenodo},
   doi = {10.5281/zenodo.18676816},

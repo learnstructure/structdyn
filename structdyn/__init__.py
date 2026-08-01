@@ -9,6 +9,7 @@ Author: Abinash Mandal
 from .sdf.sdf import SDF
 from .mdf.mdf import MDF
 from .ground_motions.ground_motion import GroundMotion
+from .loads import LoadHistory
 from .sdf.response_spectrum import ResponseSpectrum
 
 # SDF Numerical Methods
@@ -41,6 +42,7 @@ __all__ = [
     "SDF",
     "MDF",
     "GroundMotion",
+    "LoadHistory",
     "ResponseSpectrum",
     # SDF Numerical Methods
     "CentralDifference",
