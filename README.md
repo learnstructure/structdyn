@@ -22,10 +22,13 @@ See the documentation here: [![Documentation Status](https://readthedocs.org/pro
 
 **Multi-Degree-of-Freedom (MDF) Systems:**
 
-*   **Shear Building Models:** Quickly create MDF systems for typical shear buildings.
-*   **Modal Analysis:** Compute natural frequencies, mode shapes, and modal participation factors.
-*   **Response History Analysis:** Perform linear and non-linear time history analysis using direct integration.
-*   **Response Spectrum Analysis (RSA):** Estimate peak responses using modal combination methods (SRSS).
+*   **Direct FEM Bridges:** Convert 2D (`fem2d`) and 3D (`fem3d`) structural models directly into MDF dynamic systems (`MDF.from_fem2d`, `MDF.from_fem3d`, `MDF.from_fem`) with automated mass and stiffness matrix condensation.
+*   **Multi-Directional Ground Motions:** Apply earthquake accelerations in primary translational directions ($X, Y, Z$) with automatic DOF influence vector mapping (`find_response_ground_motion(gm, direction="x")`).
+*   **Shear Building Models:** Quickly create MDF systems for typical shear buildings from floor masses and story stiffnesses.
+*   **Modal Analysis:** Compute natural frequencies, mode shapes, periods, and modal participation factors.
+*   **Response History Analysis:** Perform linear and non-linear time history analysis using direct integration (Central Difference, Newmark-Beta) or modal superposition.
+*   **Response Spectrum Analysis (RSA):** Estimate peak responses using modal combination methods (SRSS, CQC).
+*   **Dynamic Force Enveloping:** Extract peak dynamic internal member forces ($\pm P, \pm V, \pm M$) for downstream code design in `aci318`.
 
 **Visualization:**
 
@@ -93,6 +96,53 @@ combined_base_shear = rsa.combine_modal_responses(modal_base_shear, method="SRSS
 print(f"Combined base shear (SRSS): {combined_base_shear[0]:.2f} N")
 # Expected result from Chopra, Example 13.8.2: 291221.90 N
 ```
+
+## Direct FEM Dynamic Analysis (`fem2d` & `fem3d`)
+
+`structdyn` bridges directly with [`fem2d`](../fem2d/) and [`fem3d`](../fem3d/) finite element models via `MDF.from_fem2d`, `MDF.from_fem3d`, and the unified `MDF.from_fem` constructors. This allows complete 2D plane frames and 3D space frames to be analyzed under earthquake ground motions with consistent mass and stiffness matrices:
+
+```python
+from fem2d import SimpleFrame
+from structdyn import MDF, GroundMotion
+from structdyn.utils.helpers import elcentro_chopra
+
+# 1. Build a 2D portal frame in fem2d with mass density
+frame = SimpleFrame()
+frame.add_node(1, 0, 0)
+frame.add_node(2, 6, 0)
+frame.add_node(3, 0, 3)
+frame.add_node(4, 6, 3)
+
+# Columns & Beam (E in kPa, A in m^2, I in m^4, rho in kg/m^3)
+frame.add_frame(1, 1, 3, E=2.5e7, A=0.16, I=0.002133, rho=2400)
+frame.add_frame(2, 2, 4, E=2.5e7, A=0.16, I=0.002133, rho=2400)
+frame.add_frame(3, 3, 4, E=2.5e7, A=0.12, I=0.001600, rho=2400)
+
+frame.add_support(1, [True, True, True])
+frame.add_support(2, [True, True, True])
+
+# 2. Bridge directly into structdyn MDF system with 5% modal damping
+mdf = MDF.from_fem2d(frame.structure, zeta=0.05, n_modes=2)
+
+# 3. Load earthquake record (El Centro 1940)
+elc = elcentro_chopra()
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+
+# 4. Compute time-history response to horizontal ground motion
+res = mdf.find_response_ground_motion(gm, direction="x", method="central_difference")
+
+print(f"Max lateral displacement: {res['displacement'].abs().max().max():.4f} m")
+```
+
+For 3D space frames with 6 DOFs per node, use `MDF.from_fem3d(structure, zeta=0.05)` or the universal `MDF.from_fem(structure)`.
+
+## Ecosystem Integration
+
+`structdyn` forms the dynamic analysis engine of the [Structural Engineering Ecosystem](../README.md):
+
+* **`fem2d` & `fem3d`**: Direct condensation of structural stiffness $\mathbf{K}$ and mass $\mathbf{M}$ matrices.
+* **`struct_agent`**: Automated execution of time-history analysis (`run_time_history`) and dynamic results querying (`inspect_dynamic_results`).
+* **`aci318`**: Dynamic force envelope synthesis converts peak earthquake internal forces ($\pm P, \pm V, \pm M$) into design demand cases for reinforced concrete member proportioning and rebar detailing.
 
 <details>
 <summary>Click for more examples (SDF Systems, Ground Motion, etc.)</summary>

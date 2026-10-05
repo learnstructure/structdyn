@@ -10,14 +10,19 @@ authors = [
     { name="Abinash Mandal", email="abinashmandal33486@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+]
 
 dependencies = [
     "numpy",
     "matplotlib",
     "pandas",
     "scipy",
-    "importlib-resources; python_version < '3.9'"
 ]
 
 [project.optional-dependencies]

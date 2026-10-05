@@ -148,6 +148,9 @@ class MDF:
         n_modes : int, optional
             Number of modes for damping matrix calculation.
         """
+        if hasattr(structure, "structure"):
+            structure = structure.structure
+
         structure.number_dofs()
         structure.apply_boundary_conditions()
         K_ff, M_ff = structure.get_reduced_matrices()
@@ -164,6 +167,66 @@ class MDF:
             instance.set_modal_damping(zeta, n_modes=n_modes)
 
         return instance
+
+    @classmethod
+    def from_fem3d(cls, structure, zeta=None, n_modes=None):
+        """
+        Creates an MDF system directly from a fem3d Structure or SimpleFrame object.
+
+        Parameters
+        ----------
+        structure : fem3d.Structure or fem3d.SimpleFrame
+            The fem3d structure or simple frame model.
+        zeta : float or list of float, optional
+            Modal damping ratio(s).
+        n_modes : int, optional
+            Number of modes for damping matrix calculation.
+        """
+        if hasattr(structure, "structure"):
+            structure = structure.structure
+
+        structure.number_dofs()
+        structure.apply_boundary_conditions()
+        K_ff, M_ff = structure.get_reduced_matrices()
+
+        instance = cls(M=M_ff, K=K_ff, elements=structure)
+        instance.structure = structure
+
+        if zeta is not None:
+            if isinstance(zeta, (int, float)):
+                n = len(structure.free_dofs)
+                if n_modes is not None:
+                    n = min(n, n_modes)
+                zeta = [float(zeta)] * n
+            instance.set_modal_damping(zeta, n_modes=n_modes)
+
+        return instance
+
+    @classmethod
+    def from_fem(cls, structure, zeta=None, n_modes=None):
+        """
+        Creates an MDF system directly from either a fem2d or fem3d Structure or SimpleFrame.
+        """
+        if hasattr(structure, "structure"):
+            structure = structure.structure
+
+        structure.number_dofs()
+        structure.apply_boundary_conditions()
+        K_ff, M_ff = structure.get_reduced_matrices()
+
+        instance = cls(M=M_ff, K=K_ff, elements=structure)
+        instance.structure = structure
+
+        if zeta is not None:
+            if isinstance(zeta, (int, float)):
+                n = len(structure.free_dofs)
+                if n_modes is not None:
+                    n = min(n, n_modes)
+                zeta = [float(zeta)] * n
+            instance.set_modal_damping(zeta, n_modes=n_modes)
+
+        return instance
+
     
 
     def find_response(
@@ -234,18 +297,19 @@ class MDF:
         if elements is not None:
             self.elements = elements
 
-        is_fem2d_structure = False
-        from fem2d.structure import Structure
-        if isinstance(self.elements, Structure) or (hasattr(self, "structure") and isinstance(self.structure, Structure)):
-            is_fem2d_structure = True
+        is_fem_structure = False
+        if hasattr(self, "structure") and self.structure is not None:
+            is_fem_structure = True
+        elif hasattr(self.elements, "free_dofs") and hasattr(self.elements, "elements"):
+            is_fem_structure = True
 
-        if method == "central_difference" and (self.elements is not None or is_fem2d_structure):
-            # Fall back to newmark_beta for non-linear or fem2d structure dynamics
+        if method == "central_difference" and (self.elements is not None or is_fem_structure):
+            # Fall back to newmark_beta for non-linear or fem structure dynamics
             method = "newmark_beta"
 
         # Determine solver class based on method and nonlinearity
         if method == "newmark_beta":
-            if self.elements is not None or is_fem2d_structure:
+            if self.elements is not None or is_fem_structure:
                 from structdyn.mdf.numerical_methods.newmark_beta_non_linear import (
                     NewmarkBetaNonLinear,
                 )
@@ -298,10 +362,26 @@ class MDF:
         ag = np.asarray(gm.acceleration, dtype=float)
         if inf_vec is None:
             if hasattr(self, "structure") and self.structure is not None:
-                # Default influence vector: 1 for horizontal (ux) DOFs, 0 for vertical (uy) and rotational (rz) DOFs
+                struct = self.structure
+                # Determine DOF stride per node: 6 for 3D, 3 for 2D
+                dofs_per_node = 3
+                if any(len(getattr(n, "dofs", [])) == 6 for n in getattr(struct, "nodes", {}).values()):
+                    dofs_per_node = 6
+
+                # Direction can be passed via kwargs or default to primary translation
+                direction = str(kwargs.pop("direction", "x")).lower()
+                if direction in ("x", "0"):
+                    target_sub_dof = 0
+                elif direction in ("y", "1"):
+                    target_sub_dof = 1
+                elif direction in ("z", "2"):
+                    target_sub_dof = 2 if dofs_per_node == 6 else 1
+                else:
+                    target_sub_dof = 0
+
                 inf_vec = np.zeros(self.ndof)
-                for i, dof_idx in enumerate(self.structure.free_dofs):
-                    if dof_idx % 3 == 0:  # ux degree of freedom
+                for i, dof_idx in enumerate(struct.free_dofs):
+                    if dof_idx % dofs_per_node == target_sub_dof:
                         inf_vec[i] = 1.0
             else:
                 inf_vec = np.ones(self.ndof)
@@ -343,13 +423,11 @@ class MDF:
         Kt : np.ndarray
             The global tangent stiffness matrix.
         """
-        from fem2d.structure import Structure
-
         struct = None
-        if isinstance(self.elements, Structure):
-            struct = self.elements
-        elif hasattr(self, "structure") and isinstance(self.structure, Structure):
+        if hasattr(self, "structure") and self.structure is not None:
             struct = self.structure
+        elif hasattr(self.elements, "free_dofs") and hasattr(self.elements, "elements"):
+            struct = self.elements
 
         if struct is not None:
             d = np.zeros(struct.neq)
@@ -402,13 +480,11 @@ class MDF:
         u : np.ndarray
             The converged displacement vector for the time step.
         """
-        from fem2d.structure import Structure
-
         struct = None
-        if isinstance(self.elements, Structure):
-            struct = self.elements
-        elif hasattr(self, "structure") and isinstance(self.structure, Structure):
+        if hasattr(self, "structure") and self.structure is not None:
             struct = self.structure
+        elif hasattr(self.elements, "free_dofs") and hasattr(self.elements, "elements"):
+            struct = self.elements
 
         if struct is not None:
             d = np.zeros(struct.neq)
@@ -416,7 +492,8 @@ class MDF:
             for el in struct.elements.values():
                 if hasattr(el, "update_state"):
                     el.update_state(d)
-            struct.commit_state()
+            if hasattr(struct, "commit_state"):
+                struct.commit_state()
         elif self.elements is not None:
             for elem in self.elements:
                 if hasattr(elem, "commit"):
