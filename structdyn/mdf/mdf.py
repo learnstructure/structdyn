@@ -230,7 +230,7 @@ class MDF:
     
 
     def find_response(
-        self, load, method="central_difference", elements=None, **kwargs
+        self, load, method=None, elements=None, **kwargs
     ):
         """
         Computes the dynamic response of the system to an external force.
@@ -303,9 +303,12 @@ class MDF:
         elif hasattr(self.elements, "free_dofs") and hasattr(self.elements, "elements"):
             is_fem_structure = True
 
-        if method == "central_difference" and (self.elements is not None or is_fem_structure):
-            # Fall back to newmark_beta for non-linear or fem structure dynamics
-            method = "newmark_beta"
+        if method is None:
+            method = "newmark_beta" if (self.elements is not None or is_fem_structure) else "central_difference"
+        elif method == "central_difference" and (self.elements is not None or is_fem_structure):
+            raise NotImplementedError(
+                "Central difference nonlinear/FEM dynamic solver is not implemented. Please use method='newmark_beta'."
+            )
 
         # Determine solver class based on method and nonlinearity
         if method == "newmark_beta":
@@ -318,12 +321,7 @@ class MDF:
             else:
                 solver_class = NewmarkBetaMDF
         elif method == "central_difference":
-            if self.elements is not None:
-                raise NotImplementedError(
-                    "Central difference nonlinear solver not yet implemented"
-                )
-            else:
-                solver_class = CentralDifferenceMDF
+            solver_class = CentralDifferenceMDF
         else:
             raise ValueError("method must be 'central_difference' or 'newmark_beta'")
 
@@ -331,7 +329,7 @@ class MDF:
         return solver.compute_solution(time, load_matrix)
 
     def find_response_ground_motion(
-        self, gm, inf_vec=None, method="central_difference", **kwargs
+        self, gm, inf_vec=None, method=None, **kwargs
     ):
         """
         Computes the dynamic response of the system to ground motion.

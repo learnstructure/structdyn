@@ -153,3 +153,29 @@ def test_section_6_4_response_spectrum():
     # Index 20 corresponds to period = 2.0 s (since step = 0.1)
     expected = 0.1896749378231744
     assert spectra["Sd"][20] == pytest.approx(expected, rel=1e-5)
+    assert "pSa" in spectra.columns
+    assert "pSa (g)" in spectra.columns
+
+
+def test_response_spectrum_unit_consistency():
+    """Verify ResponseSpectrum respects consistent units (e.g. US customary with scale_factor=386.09)."""
+    acc_g = np.array([0.0, 0.5, -0.5, 0.0])
+    dt = 0.05
+    # Metric (m/s^2)
+    gm_metric = GroundMotion.from_arrays(acc_g, dt, scale_factor=9.80665)
+    rs_metric = ResponseSpectrum([0.5, 1.0], 0.05, gm_metric)
+    df_metric = rs_metric.compute()
+
+    # US Customary (in/s^2) -> 1 g = 386.08858 in/s^2
+    g_us = 386.08858
+    gm_us = GroundMotion.from_arrays(acc_g, dt, scale_factor=g_us)
+    rs_us = ResponseSpectrum([0.5, 1.0], 0.05, gm_us)
+    df_us = rs_us.compute()
+
+    # Sd in inches should equal Sd in meters * (386.08858 / 9.80665)
+    ratio = g_us / 9.80665
+    assert df_us["Sd"].iloc[0] == pytest.approx(df_metric["Sd"].iloc[0] * ratio, rel=1e-5)
+    assert df_us["pSa"].iloc[0] == pytest.approx(df_metric["pSa"].iloc[0] * ratio, rel=1e-5)
+    # pSa (g) must be identical regardless of whether units were metric or US customary!
+    assert df_us["pSa (g)"].iloc[0] == pytest.approx(df_metric["pSa (g)"].iloc[0], rel=1e-5)
+

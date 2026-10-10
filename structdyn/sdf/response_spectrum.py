@@ -50,8 +50,9 @@ class ResponseSpectrum:
         -------
         pandas.DataFrame
             A DataFrame containing the response spectrum, with columns for period (T),
-            spectral displacement (Sd), pseudo-spectral velocity (pSv), and
-            pseudo-spectral acceleration in g (pSa (g)).
+            spectral displacement (Sd), pseudo-spectral velocity (pSv),
+            pseudo-spectral acceleration (pSa) in consistent units, and
+            pseudo-spectral acceleration normalized by g (pSa (g)).
         """
         periods = self.periods.copy()
         include_zero = np.any(periods == 0)
@@ -82,16 +83,19 @@ class ResponseSpectrum:
         # Compute pseudo spectral values
         w_n_array = 2 * np.pi / periods_nonzero
         pSv = w_n_array * Sd
-        pSa = (w_n_array**2) * Sd / 9.81  # convert to g
+        pSa = (w_n_array**2) * Sd
+        scale = getattr(self.gm, "scale_factor", 9.81) or 9.81
+        pSa_g = pSa / scale if scale != 0 else pSa
 
-        df = pd.DataFrame({"T": periods_nonzero, "Sd": Sd, "pSv": pSv, "pSa (g)": pSa})
+        df = pd.DataFrame({"T": periods_nonzero, "Sd": Sd, "pSv": pSv, "pSa": pSa, "pSa (g)": pSa_g})
 
         # Handle T = 0 case explicitly
         if include_zero:
-            PGA = np.max(np.abs(self.gm.acc_g))  # already in g if acc_g is in g
+            PGA_g = np.max(np.abs(self.gm.acc_g))  # peak input acceleration in g
+            PGA = PGA_g * scale
 
             zero_row = pd.DataFrame(
-                {"T": [0.0], "Sd": [0.0], "pSv": [0.0], "pSa (g)": [PGA]}
+                {"T": [0.0], "Sd": [0.0], "pSv": [0.0], "pSa": [PGA], "pSa (g)": [PGA_g]}
             )
 
             df = pd.concat([zero_row, df], ignore_index=True)

@@ -324,16 +324,28 @@ class RambergOsgood(MaterialModel):
             s_guess = sign_r * (r_abs / alpha_coef) ** (1.0 / self.n)
 
         s = s_guess
-        for _ in range(30):  # Newton‑Raphson
+        converged = False
+        f = 0.0
+        for _ in range(50):  # Newton‑Raphson
             s_abs = abs(s)
             f = s + alpha_coef * (s_abs**self.n) * np.sign(s) - r
             if abs(f) < 1e-12:
+                converged = True
                 break
             df = 1.0 + alpha_coef * self.n * (s_abs ** (self.n - 1))
+            if abs(df) < 1e-15:
+                raise RuntimeError(
+                    f"Ramberg-Osgood Newton-Raphson solver encountered zero derivative for r={r}."
+                )
             s -= f / df
-            if abs(s) > 1e6:  # fallback if solver diverges
-                s = s_guess
-                break
+            if abs(s) > 1e8:  # solver diverged
+                raise RuntimeError(
+                    f"Ramberg-Osgood Newton-Raphson solver diverged (|s| > 1e8) for normalized strain r={r}."
+                )
+        if not converged and abs(f) > 1e-6:
+            raise RuntimeError(
+                f"Ramberg-Osgood Newton-Raphson solver failed to converge after 50 iterations for r={r} (residual: {abs(f):.2e})."
+            )
         return s
 
     def trial_response(self, u, v, dt):
