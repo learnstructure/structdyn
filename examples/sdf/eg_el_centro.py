@@ -8,8 +8,16 @@ import numpy as np
 # from structdyn.utils.helpers import elcentro_chopra
 
 # Define el centro ground motion from Chopra's book- Appendix 6
-elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+#Method 1
+# elc = elcentro_chopra()
+# gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+
+#Method 2
+# gm = GroundMotion.from_elcentro_chopra()
+
+#Method 3
+gm = GroundMotion.from_event("elcentro_chopra")
+
 
 # Create SDF object
 m = 1
@@ -25,9 +33,9 @@ print(results["displacement"].abs().max())  # result is 0.0679400697200714
 
 # Visualization
 # sdf.plot.plot_system()  # Plot the undeformed system
-sdf.plot.animate_response(
-    results,
-    ground_motion=(gm.time, gm.acc_g),
-    scale_factor=10,  # Scale factor for better visualization
-    # save_path='sdf_response_animation.mp4'
-)
+# sdf.plot.animate_response(
+#     results,
+#     ground_motion=(gm.time, gm.acc_g),
+#     scale_factor=10,  # Scale factor for better visualization
+#     # save_path='sdf_response_animation.mp4'
+# )

@@ -22,9 +22,8 @@ def elcentro_chopra(header=0):
     pandas.DataFrame
         A DataFrame containing the ground motion data.
     """
-    with resources.open_text(
-        "structdyn.ground_motions.data", "elcentro_chopra.csv"
-    ) as f:
+    csv_path = resources.files("structdyn.ground_motions.data") / "elcentro_chopra.csv"
+    with csv_path.open("r") as f:
         return pd.read_csv(f, header=header)
 
 

@@ -237,7 +237,37 @@ print(responses["displacement"][10])  # result is 0.03606328101158249
 
 ```
 
+### Response Spectrum Analysis (MDF)
+
+`structdyn` supports Response Spectrum Analysis (RSA) with continuous user spectrum curves, ASCE 7 parameters ($S_{DS}, S_{D1}, T_L$), ground motion records, and modal combination rules (CQC, SRSS).
+
+```python
+import numpy as np
+from structdyn import MDF, ResponseSpectrumAnalysis
+
+# 5-story shear building
+masses = np.ones(5) * 45000  # kg per floor
+stiffness = np.ones(5) * 54.82e5  # N/m
+mdf = MDF.from_shear_building(masses, stiffness)
+
+# Perform RSA with ASCE 7 design spectrum parameters
+rsa = ResponseSpectrumAnalysis(
+    mdf, ji=0.05, sds=1.0, sd1=0.6, tl=8.0, scale_factor=9.80665
+)
+
+# Modal properties
+print("Modal Periods (s):", rsa.T)
+print("Modal Participation Factors:", rsa.gamma)
+print("Mass Participation Ratios (%):", rsa.mass_participation_ratio * 100)
+
+# Base shear and CQC combination
+modal_vb = rsa.modal_base_shear()
+cqc_vb = rsa.combine_modal_responses(modal_vb, method="CQC")
+print(f"Combined Base Shear (CQC): {float(cqc_vb[0]):.2f} N")
+```
+
 </details>
+
 
 
 ## Validated Examples

@@ -227,7 +227,17 @@ class MDF:
 
         return instance
 
-    
+    def response_spectrum_analysis(self, **kwargs):
+        """
+        Performs Response Spectrum Analysis on the MDF system.
+
+        Returns
+        -------
+        ResponseSpectrumAnalysis
+            The configured ResponseSpectrumAnalysis instance.
+        """
+        from .analytical_methods.response_spectrum_analysis import ResponseSpectrumAnalysis
+        return ResponseSpectrumAnalysis(self, **kwargs)
 
     def find_response(
         self, load, method=None, elements=None, **kwargs
