@@ -51,17 +51,46 @@ class ModalAnalysis:
         K = self.mdf.K.copy()
 
         diag_M = np.diag(M)
-        if np.any(diag_M <= 0):
-            max_m = np.max(diag_M)
-            eps = 1e-9 * max_m if max_m > 0 else 1e-9
-            M += eps * np.eye(M.shape[0])
+        max_m = np.max(diag_M) if len(diag_M) > 0 else 0.0
+        if max_m <= 0.0:
+            raise ValueError(
+                "Cannot perform modal analysis: mass matrix has no degrees of freedom with positive mass."
+            )
 
-        try:
-            eigenvals, eigenvecs = eigh(K, M)
-        except np.linalg.LinAlgError:
-            max_m = np.max(np.diag(self.mdf.M))
-            eps = 1e-8 * max_m if max_m > 0 else 1e-8
-            eigenvals, eigenvecs = eigh(K, self.mdf.M + eps * np.eye(K.shape[0]))
+        tol = 1e-12 * max_m
+        dyn_idx = np.where(diag_M > tol)[0]
+        sta_idx = np.where(diag_M <= tol)[0]
+
+        if len(sta_idx) == 0:
+            # All DOFs have mass: direct generalized eigensolution
+            try:
+                eigenvals, eigenvecs = eigh(K, M)
+            except np.linalg.LinAlgError:
+                eps = 1e-8 * max_m
+                eigenvals, eigenvecs = eigh(K, M + eps * np.eye(K.shape[0]))
+        else:
+            # Massless DOFs present: exact Guyan static condensation
+            K_dd = K[np.ix_(dyn_idx, dyn_idx)]
+            K_ds = K[np.ix_(dyn_idx, sta_idx)]
+            K_sd = K[np.ix_(sta_idx, dyn_idx)]
+            K_ss = K[np.ix_(sta_idx, sta_idx)]
+            M_dd = M[np.ix_(dyn_idx, dyn_idx)]
+
+            try:
+                # Exact static condensation since M_ss = 0, M_ds = 0
+                T_s = -np.linalg.solve(K_ss, K_sd)
+                K_red = K_dd + K_ds @ T_s
+                K_red = 0.5 * (K_red + K_red.T)
+
+                eigenvals, phi_d = eigh(K_red, M_dd)
+                phi_s = T_s @ phi_d
+                eigenvecs = np.zeros((K.shape[0], len(eigenvals)), dtype=float)
+                eigenvecs[dyn_idx, :] = phi_d
+                eigenvecs[sta_idx, :] = phi_s
+            except np.linalg.LinAlgError:
+                # Fallback if K_ss is singular (e.g. mechanism among massless DOFs)
+                eps = 1e-8 * max_m
+                eigenvals, eigenvecs = eigh(K, M + eps * np.eye(K.shape[0]))
 
         # Remove small negative numerical values
         eigenvals = np.real(eigenvals)
@@ -78,6 +107,7 @@ class ModalAnalysis:
             if n_modes < 1 or n_modes > self.mdf.ndof:
                 raise ValueError("n_modes must be between 1 and ndof")
 
+            n_modes = min(n_modes, len(omega))
             omega = omega[:n_modes]
             eigenvecs = eigenvecs[:, :n_modes]
 

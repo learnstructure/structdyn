@@ -107,7 +107,7 @@ from structdyn import MDF, GroundMotion
 from structdyn.utils.helpers import elcentro_chopra
 
 # 1. Build a 2D portal frame in fem2d with mass density
-frame = SimpleFrame()
+frame = SimpleFrame(units="kN, m")
 frame.add_node(1, 0, 0)
 frame.add_node(2, 6, 0)
 frame.add_node(3, 0, 3)

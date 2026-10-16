@@ -74,11 +74,12 @@ class MDF:
 
         Parameters
         ----------
-        zeta : array-like
-            An array or list of modal damping ratios for the modes to be included.
+        zeta : float, int, or array-like
+            Modal damping ratio(s) for the modes to be included. If a scalar is provided,
+            it is applied equally across all computed modes.
         n_modes : int, optional
             The number of modes to use for constructing the damping matrix.
-            If None, all modes are used. The default is None.
+            If None, all available modes are used. Defaults to None.
 
         Returns
         -------
@@ -87,15 +88,23 @@ class MDF:
         """
         omega, phi = self.modal.modal_analysis(n_modes=n_modes)
 
-        zeta = np.asarray(zeta, dtype=float)
+        num_modes = phi.shape[1]
+        if isinstance(zeta, (int, float)):
+            zeta = np.full(num_modes, float(zeta))
+        else:
+            zeta = np.asarray(zeta, dtype=float)
+            if len(zeta) != num_modes:
+                # If uniform zeta array was passed with more modes than available, truncate cleanly
+                if len(zeta) > num_modes and np.allclose(zeta, zeta[0]):
+                    zeta = zeta[:num_modes]
+                else:
+                    raise ValueError(
+                        f"Length of zeta ({len(zeta)}) must equal number of modes used ({num_modes})."
+                    )
 
-        n_modes = phi.shape[1]
-
-        if len(zeta) != n_modes:
-            raise ValueError("Length of zeta must equal number of modes used.")
         C = np.zeros_like(self.M)
 
-        for i in range(n_modes):
+        for i in range(num_modes):
             phi_i = phi[:, i].reshape(-1, 1)
             # Modal mass
             Mn = phi_i.T @ self.M @ phi_i

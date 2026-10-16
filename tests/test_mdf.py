@@ -165,3 +165,43 @@ def test_mdf_nl_chopra_example_16_4():
     calculated_u5_at_t20 = response.iloc[20, 5]  # Corresponds to u5 at time=2.0
 
     assert calculated_u5_at_t20 == pytest.approx(expected_u5_at_t20)
+
+
+def test_guyan_condensation_massless_dofs():
+    """
+    Test exact Guyan dynamic condensation for degrees of freedom with zero mass.
+    Canonical 2-DOF cantilever beam (tip translation v and rotation theta):
+    K = [[12EI/L^3, -6EI/L^2], [-6EI/L^2, 4EI/L]]
+    M = [[m, 0], [0, 0]] (rotational DOF has zero mass).
+    Exact condensed stiffness: K_red = 12EI/L^3 - (-6)^2/(4) * EI/L^3 = 3EI/L^3.
+    Exact natural frequency: omega = sqrt(3EI / (m * L^3)).
+    Exact slope at tip: theta = -inv(K_ss) * K_sd * v = 1.5 / L * v.
+    """
+    E = 30000.0
+    I = 100.0
+    L = 120.0
+    m = 2.5
+
+    k11 = 12.0 * E * I / (L**3)
+    k12 = -6.0 * E * I / (L**2)
+    k22 = 4.0 * E * I / L
+    K = np.array([[k11, k12], [k12, k22]], dtype=float)
+    M = np.array([[m, 0.0], [0.0, 0.0]], dtype=float)
+
+    mdf = MDF(M=M, K=K)
+    omega, phi = mdf.modal.modal_analysis(dof_normalize=0)
+
+    # 1. Frequency matches exact analytical formula
+    omega_exact = np.sqrt(3.0 * E * I / (m * L**3))
+    assert len(omega) == 1
+    assert omega[0] == pytest.approx(omega_exact, rel=1e-10)
+
+    # 2. Mode shape tip translation is 1.0, tip slope is 1.5 / L
+    assert phi[0, 0] == pytest.approx(1.0, rel=1e-10)
+    assert phi[1, 0] == pytest.approx(1.5 / L, rel=1e-10)
+
+    # 3. Modal orthogonality and Rayleigh quotient identity
+    Kn = float(phi[:, 0].T @ K @ phi[:, 0])
+    Mn = float(phi[:, 0].T @ M @ phi[:, 0])
+    assert np.sqrt(Kn / Mn) == pytest.approx(omega_exact, rel=1e-10)
+

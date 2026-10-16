@@ -344,9 +344,6 @@ class ResponseSpectrumAnalysis:
         self.u = u
         return u
 
-    def modal_diplacements(self, Sd: Optional[Union[List[float], np.ndarray]] = None) -> np.ndarray:
-        """Backward-compatible alias for modal_displacements."""
-        return self.modal_displacements(Sd=Sd)
 
     def modal_equivalent_forces(self) -> np.ndarray:
         """
