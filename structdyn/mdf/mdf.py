@@ -144,7 +144,14 @@ class MDF:
         return instance
 
     @classmethod
-    def from_fem2d(cls, structure, zeta=None, n_modes=None):
+    def from_fem2d(
+        cls,
+        structure,
+        zeta=None,
+        n_modes=None,
+        lumped=None,
+        include_rotational_inertia=False,
+    ):
         """
         Creates an MDF system directly from a fem2d Structure object (linear or non-linear).
 
@@ -156,13 +163,28 @@ class MDF:
             Modal damping ratio(s).
         n_modes : int, optional
             Number of modes for damping matrix calculation.
+        lumped : bool, optional
+            Whether to use lumped mass formulation.
+        include_rotational_inertia : bool, optional
+            Whether to include rotational mass inertia when lumped=True. Defaults to False.
         """
         if hasattr(structure, "structure"):
             structure = structure.structure
 
         structure.number_dofs()
         structure.apply_boundary_conditions()
-        K_ff, M_ff = structure.get_reduced_matrices()
+        if hasattr(structure, "get_reduced_matrices"):
+            import inspect
+            sig = inspect.signature(structure.get_reduced_matrices)
+            if "lumped" in sig.parameters and lumped is not None:
+                K_ff, M_ff = structure.get_reduced_matrices(
+                    lumped=lumped,
+                    include_rotational_inertia=include_rotational_inertia,
+                )
+            else:
+                K_ff, M_ff = structure.get_reduced_matrices()
+        else:
+            K_ff, M_ff = structure.get_reduced_matrices()
 
         instance = cls(M=M_ff, K=K_ff, elements=structure)
         instance.structure = structure
@@ -178,7 +200,14 @@ class MDF:
         return instance
 
     @classmethod
-    def from_fem3d(cls, structure, zeta=None, n_modes=None):
+    def from_fem3d(
+        cls,
+        structure,
+        zeta=None,
+        n_modes=None,
+        lumped=None,
+        include_rotational_inertia=False,
+    ):
         """
         Creates an MDF system directly from a fem3d Structure or SimpleFrame object.
 
@@ -190,13 +219,28 @@ class MDF:
             Modal damping ratio(s).
         n_modes : int, optional
             Number of modes for damping matrix calculation.
+        lumped : bool, optional
+            Whether to use lumped mass formulation.
+        include_rotational_inertia : bool, optional
+            Whether to include rotational mass inertia when lumped=True. Defaults to False.
         """
         if hasattr(structure, "structure"):
             structure = structure.structure
 
         structure.number_dofs()
         structure.apply_boundary_conditions()
-        K_ff, M_ff = structure.get_reduced_matrices()
+        if hasattr(structure, "get_reduced_matrices"):
+            import inspect
+            sig = inspect.signature(structure.get_reduced_matrices)
+            if "lumped" in sig.parameters and lumped is not None:
+                K_ff, M_ff = structure.get_reduced_matrices(
+                    lumped=lumped,
+                    include_rotational_inertia=include_rotational_inertia,
+                )
+            else:
+                K_ff, M_ff = structure.get_reduced_matrices()
+        else:
+            K_ff, M_ff = structure.get_reduced_matrices()
 
         instance = cls(M=M_ff, K=K_ff, elements=structure)
         instance.structure = structure
@@ -212,7 +256,14 @@ class MDF:
         return instance
 
     @classmethod
-    def from_fem(cls, structure, zeta=None, n_modes=None):
+    def from_fem(
+        cls,
+        structure,
+        zeta=None,
+        n_modes=None,
+        lumped=None,
+        include_rotational_inertia=False,
+    ):
         """
         Creates an MDF system directly from either a fem2d or fem3d Structure or SimpleFrame.
         """
@@ -221,7 +272,18 @@ class MDF:
 
         structure.number_dofs()
         structure.apply_boundary_conditions()
-        K_ff, M_ff = structure.get_reduced_matrices()
+        if hasattr(structure, "get_reduced_matrices"):
+            import inspect
+            sig = inspect.signature(structure.get_reduced_matrices)
+            if "lumped" in sig.parameters and lumped is not None:
+                K_ff, M_ff = structure.get_reduced_matrices(
+                    lumped=lumped,
+                    include_rotational_inertia=include_rotational_inertia,
+                )
+            else:
+                K_ff, M_ff = structure.get_reduced_matrices()
+        else:
+            K_ff, M_ff = structure.get_reduced_matrices()
 
         instance = cls(M=M_ff, K=K_ff, elements=structure)
         instance.structure = structure

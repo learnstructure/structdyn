@@ -46,12 +46,8 @@ class ResponseSpectrumAnalysis:
         - callable: f(T) -> Sa
         - tuple: (periods, sa_values)
         - dict: {"T": [...], "Sa": [...]}
-    sds : float, optional
-        ASCE 7 design spectral response acceleration parameter at short periods, SDS.
-    sd1 : float, optional
-        ASCE 7 design spectral response acceleration parameter at 1-second period, SD1.
-    tl : float, optional
-        ASCE 7 long-period transition period, TL (seconds). Default is 8.0.
+    params : Any, optional
+        SeismicParameters object from struct_load providing design response spectrum.
     direction : str, optional
         Ground motion excitation direction: 'x', 'y', or 'z'. Default is 'x'.
     inf_vec : array-like, optional
@@ -66,16 +62,14 @@ class ResponseSpectrumAnalysis:
     def __init__(
         self,
         mdf: Any,
-        ji: Union[float, List[float], np.ndarray] = 0.05,
+        ji: Optional[Union[float, List[float], np.ndarray]] = None,
         n_modes: Optional[int] = None,
         gm: Any = None,
         gm_component: Optional[str] = None,
         Sd: Optional[Union[List[float], np.ndarray]] = None,
         Sa: Optional[Union[List[float], np.ndarray]] = None,
         spectrum_curve: Optional[Union[Callable[[float], float], Tuple[Any, Any], Dict[str, Any]]] = None,
-        sds: Optional[float] = None,
-        sd1: Optional[float] = None,
-        tl: float = 8.0,
+        params: Optional[Any] = None,
         direction: str = "x",
         inf_vec: Optional[Union[List[float], np.ndarray]] = None,
         scale_factor: float = 1.0,
@@ -83,9 +77,7 @@ class ResponseSpectrumAnalysis:
         self.mdf = mdf
         self.scale_factor = float(scale_factor)
         self.direction = str(direction).lower()
-        self.sds = sds
-        self.sd1 = sd1
-        self.tl = float(tl)
+        self.params = params
         self.spectrum_curve = spectrum_curve
         self.gm_component = gm_component
 
@@ -116,6 +108,9 @@ class ResponseSpectrumAnalysis:
         else:
             self.n_modes = min(n_modes, mdf.ndof)
 
+        if ji is None:
+            ji = getattr(params, "damping_ratio", 0.05) if params is not None else 0.05
+
         if isinstance(ji, (list, tuple, np.ndarray)):
             self.ji = np.asarray(ji, dtype=float)
             if len(self.ji) < self.n_modes:
@@ -126,7 +121,14 @@ class ResponseSpectrumAnalysis:
         omega, phi = self.mdf.modal.modal_analysis(n_modes=self.n_modes)
         self.omega = omega
         self.phi = phi
+        self.n_modes = len(omega)
         self.T = 2.0 * np.pi / self.omega
+
+        if len(self.ji) != self.n_modes:
+            if len(self.ji) > self.n_modes:
+                self.ji = self.ji[: self.n_modes]
+            else:
+                self.ji = np.pad(self.ji, (0, self.n_modes - len(self.ji)), constant_values=self.ji[-1])
 
         self.inf_vec = self._resolve_influence_vector(self.direction, inf_vec)
         self.lambda_ = self.compute_modal_participation_factors(self.inf_vec)
@@ -190,30 +192,6 @@ class ResponseSpectrumAnalysis:
         return np.ones(self.mdf.ndof, dtype=float)
 
     @staticmethod
-    def _evaluate_asce7_spectrum(T: np.ndarray, sds: float, sd1: float, tl: float) -> np.ndarray:
-        """
-        Evaluates ASCE 7 design response spectrum Sa(T) for an array of periods T.
-        """
-        if sds <= 0.0 or sd1 <= 0.0:
-            return np.zeros_like(T)
-
-        t0 = 0.2 * sd1 / sds
-        ts = sd1 / sds
-        sa = np.zeros_like(T)
-
-        for idx, t_val in enumerate(T):
-            if t_val < t0:
-                sa[idx] = sds * (0.4 + 0.6 * (t_val / t0))
-            elif t_val <= ts:
-                sa[idx] = sds
-            elif t_val <= tl:
-                sa[idx] = sd1 / t_val
-            else:
-                sa[idx] = (sd1 * tl) / (t_val ** 2)
-
-        return sa
-
-    @staticmethod
     def _evaluate_spectrum_curve(
         T: np.ndarray,
         curve: Union[Callable[[float], float], Tuple[Any, Any], Dict[str, Any]],
@@ -254,8 +232,11 @@ class ResponseSpectrumAnalysis:
             self.Sa = sa_arr
             return sa_arr / (self.omega ** 2)
 
-        elif self.sds is not None and self.sd1 is not None:
-            sa_arr = self._evaluate_asce7_spectrum(T, self.sds, self.sd1, self.tl) * self.scale_factor
+        elif self.params is not None:
+            from struct_load import evaluate_design_spectral_acceleration
+
+            sa_vals = evaluate_design_spectral_acceleration(self.params, T)
+            sa_arr = np.asarray(sa_vals, dtype=float) * self.scale_factor
             self.Sa = sa_arr
             return sa_arr / (self.omega ** 2)
 

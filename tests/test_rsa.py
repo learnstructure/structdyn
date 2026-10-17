@@ -70,11 +70,14 @@ def test_rsa_asce7_spectrum_parameters():
     stiffness = [2e6, 2e6, 2e6]
     mdf = MDF.from_shear_building(masses, stiffness)
 
+    from struct_load import SeismicParameters
+
     sds = 1.0
     sd1 = 0.6
     tl = 8.0
+    params = SeismicParameters(sds=sds, sd1=sd1, tl=tl, site_class="D", damping_ratio=0.05)
     rsa_asce7 = ResponseSpectrumAnalysis(
-        mdf, ji=0.05, sds=sds, sd1=sd1, tl=tl, scale_factor=9.80665
+        mdf, params=params, scale_factor=9.80665
     )
 
     t0 = 0.2 * sd1 / sds
