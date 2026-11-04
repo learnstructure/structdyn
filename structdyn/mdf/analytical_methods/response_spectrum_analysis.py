@@ -142,6 +142,7 @@ class ResponseSpectrumAnalysis:
 
         self.u = None
         self.f_eq = None
+        self._cqc_rho: Optional[np.ndarray] = None
 
     def _resolve_influence_vector(
         self,
@@ -367,22 +368,20 @@ class ResponseSpectrumAnalysis:
     def compute_cqc_matrix(self) -> np.ndarray:
         """
         Computes the Der Kiureghian cross-correlation matrix rho (n_modes x n_modes).
+
+        It depends only on the modal frequencies and damping ratios, so it is computed once per analysis.
         """
-        n = self.n_modes
-        rho = np.ones((n, n), dtype=float)
-        zeta = np.broadcast_to(self.ji, (n,))
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    rho[i, j] = 1.0
-                else:
-                    r = self.omega[j] / self.omega[i]
-                    zi = zeta[i]
-                    zj = zeta[j]
-                    num = 8.0 * np.sqrt(zi * zj) * (zi + r * zj) * (r ** 1.5)
-                    den = (1.0 - r**2) ** 2 + 4.0 * zi * zj * r * (1.0 + r**2) + 4.0 * (zi**2 + zj**2) * (r**2)
-                    rho[i, j] = num / den
-        return rho
+        if self._cqc_rho is None:
+            zeta = np.broadcast_to(np.asarray(self.ji, dtype=float), (self.n_modes,))
+            omega = np.asarray(self.omega, dtype=float)
+            r = omega[None, :] / omega[:, None]  # r_ij = omega_j / omega_i
+            zi, zj = zeta[:, None], zeta[None, :]
+            num = 8.0 * np.sqrt(zi * zj) * (zi + r * zj) * r ** 1.5
+            den = (1.0 - r**2) ** 2 + 4.0 * zi * zj * r * (1.0 + r**2) + 4.0 * (zi**2 + zj**2) * r**2
+            rho = num / den
+            np.fill_diagonal(rho, 1.0)
+            self._cqc_rho = rho
+        return self._cqc_rho
 
     def combine_modal_responses(
         self,

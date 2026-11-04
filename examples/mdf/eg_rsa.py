@@ -81,8 +81,10 @@ print("Combined Base Shear (CQC):", float(vb_cqc_curve[0]), "N")
 # -----------------------------------------------------------------------------
 # Method D: RSA from ASCE 7 parameters (SDS=1.0, SD1=0.6, TL=8.0)
 # -----------------------------------------------------------------------------
+from struct_load.codes.asce7_seismic import SeismicParameters
+
 rsa_asce = ResponseSpectrumAnalysis(
-    mdf, ji=0.05, sds=1.0, sd1=0.6, tl=8.0, scale_factor=9.80665
+    mdf, ji=0.05, params=SeismicParameters(sds=1.0, sd1=0.6, site_class="D", risk_category="II", tl=8.0), scale_factor=9.80665
 )
 vb_asce = rsa_asce.modal_base_shear()
 vb_cqc_asce = rsa_asce.combine_modal_responses(vb_asce, method="CQC")

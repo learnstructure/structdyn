@@ -75,7 +75,7 @@ def test_rsa_asce7_spectrum_parameters():
     sds = 1.0
     sd1 = 0.6
     tl = 8.0
-    params = SeismicParameters(sds=sds, sd1=sd1, tl=tl, site_class="D", damping_ratio=0.05)
+    params = SeismicParameters(sds=sds, sd1=sd1, tl=tl, site_class="D", risk_category="II", system_type="steel_smf", damping_ratio=0.05)
     rsa_asce7 = ResponseSpectrumAnalysis(
         mdf, params=params, scale_factor=9.80665
     )
@@ -130,3 +130,19 @@ def test_rsa_mass_participation():
 
     assert sum_eff_mass == pytest.approx(total_mass, rel=1e-5)
     assert sum_mmpr == pytest.approx(1.0, rel=1e-5)
+
+
+def test_cqc_matrix_matches_the_der_kiureghian_formula_and_is_computed_once():
+    """The vectorized correlation matrix equals the element-by-element formula, and is cached."""
+    mdf = MDF.from_shear_building(np.ones(5) * 45000, np.ones(5) * 54.82e5)
+    rsa = ResponseSpectrumAnalysis(mdf, ji=[0.02, 0.05, 0.05, 0.07, 0.05], Sd=[0.13649, 0.06557, 0.03823, 0.02227, 0.01657])
+    rho = rsa.compute_cqc_matrix()
+    for i in range(rsa.n_modes):
+        for j in range(rsa.n_modes):
+            r, zi, zj = rsa.omega[j] / rsa.omega[i], rsa.ji[i], rsa.ji[j]
+            expected = 1.0 if i == j else (
+                8.0 * np.sqrt(zi * zj) * (zi + r * zj) * r**1.5
+                / ((1.0 - r**2) ** 2 + 4.0 * zi * zj * r * (1.0 + r**2) + 4.0 * (zi**2 + zj**2) * r**2)
+            )
+            assert rho[i, j] == pytest.approx(expected, rel=1e-12)
+    assert rsa.compute_cqc_matrix() is rho

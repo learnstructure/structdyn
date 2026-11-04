@@ -121,7 +121,7 @@ def test_section_6_4_elcentro_interpolation():
     using interpolation method. The maximum absolute displacement should be 0.0679400697200714.
     """
     elc = elcentro_chopra()
-    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)
 
     m = 1.0
     ji = 0.02
@@ -144,7 +144,7 @@ def test_section_6_4_response_spectrum():
     should be 0.1896749378231744.
     """
     elc = elcentro_chopra()
-    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)
 
     periods = np.arange(0, 5.01, 0.1)  # 0.0 to 5.0 inclusive
     rs = ResponseSpectrum(periods, 0.02, gm)

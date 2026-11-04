@@ -82,7 +82,7 @@ def test_example_16_1_ground_motion_modal():
 
     # Ground motion: half‑cycle sine pulse
     time = np.arange(0, 2.01, 0.1)
-    acc = (1.93 / 9.81) * np.sin(2 * np.pi * time)
+    acc = 1.93 * np.sin(2 * np.pi * time)
     acc[time > 1.0] = 0
     gm = GroundMotion.from_arrays(acc, 0.1)
 
@@ -105,7 +105,7 @@ def test_example_13_8_2_response_spectrum_analysis():
     """
     # Define el centro ground motion from Chopra's book- Appendix 6
     elc = elcentro_chopra()
-    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+    gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)
 
     # Define mdf system: 5-story shear building
     masses = np.ones(5) * 45000  # mass of each floor in kg
@@ -129,7 +129,7 @@ def test_mdf_nl_chopra_example_16_4():
     # 1. Define ground motion (as specified in the example)
     dt = 0.1
     time = np.arange(0, 2.01, dt)
-    acc = (1.93 / 9.81) * np.sin(2 * np.pi * time)
+    acc = 1.93 * np.sin(2 * np.pi * time)
     acc[time > 1.0] = 0
     gm = GroundMotion.from_arrays(acc, dt)
     inf_vec = np.ones(5)

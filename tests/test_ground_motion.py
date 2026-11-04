@@ -38,7 +38,9 @@ def test_ground_motion_from_elcentro_chopra():
     assert len(gm.acc_g) == 1560
     assert gm.duration == pytest.approx(1559 * 0.02)
     assert gm.pga_g == pytest.approx(0.3188, rel=1e-3)
-    assert gm.pga == pytest.approx(0.3188 * 9.81, rel=1e-3)
+    assert gm.pga == pytest.approx(0.3188, rel=1e-3)
+    gm_si = GroundMotion.from_elcentro_chopra(scale_factor=9.81)
+    assert gm_si.pga == pytest.approx(0.3188 * 9.81, rel=1e-3)
 
 
 def test_ground_motion_from_event_peer_records():
@@ -141,3 +143,32 @@ def test_ground_motion_invalid_event_raises():
     """Verify requesting a non-existent event raises a clear FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Available events"):
         GroundMotion.from_event("non_existent_earthquake_xyz")
+
+
+def test_ground_motion_from_csv_and_from_file(tmp_path):
+    """Two-column CSV records (time [s], acc [g]) load via from_csv and the extension-dispatching from_file."""
+    csv_path = tmp_path / "record.csv"
+    csv_path.write_text("time,acc (g)\n0.0,0.0\n0.01,0.1\n0.02,-0.2\n0.03,0.05\n")
+
+    gm = GroundMotion.from_csv(csv_path, scale_factor=9.80665)
+    assert gm.dt == pytest.approx(0.01)
+    assert gm.pga_g == pytest.approx(0.2)
+    assert gm.pga == pytest.approx(0.2 * 9.80665)
+    assert gm.name == "record"
+
+    gm_file = GroundMotion.from_file(csv_path)
+    np.testing.assert_allclose(gm_file.acc_g, gm.acc_g)
+
+    at2 = GroundMotion._data_dir() / "imperialValley_elCentro_1940" / "RSN6_IMPVALL.I_I-ELC180-hor1.AT2"
+    gm_at2 = GroundMotion.from_file(at2)
+    assert gm_at2.dt == pytest.approx(0.01)
+    assert len(gm_at2.acc_g) == 5372
+
+
+def test_ground_motion_from_csv_rejects_non_uniform_time(tmp_path):
+    csv_path = tmp_path / "bad.csv"
+    csv_path.write_text("time,acc (g)\n0.0,0.0\n0.01,0.1\n0.03,0.2\n")
+    with pytest.raises(ValueError, match="uniform"):
+        GroundMotion.from_csv(csv_path)
+    with pytest.raises(ValueError, match="Unsupported"):
+        GroundMotion.from_file(tmp_path / "record.txt")

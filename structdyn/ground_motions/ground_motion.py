@@ -30,7 +30,7 @@ class GroundMotion:
         The component of the ground motion (e.g., 'h1', 'h2', 'v').
     """
 
-    def __init__(self, acc_g, dt, name=None, component=None, scale_factor=9.81):
+    def __init__(self, acc_g, dt, name=None, component=None, scale_factor=1.0):
         """Initializes the GroundMotion object.
 
         Parameters
@@ -45,7 +45,7 @@ class GroundMotion:
             Component of the ground motion, by default None.
         scale_factor : float, optional
             Conversion factor applied to ``acc_g`` when computing the physical
-            acceleration used in response analysis. The default is 9.81.
+            acceleration used in response analysis. The default is 1.0 (acceleration in input units).
         """
         self.acc_g = np.asarray(acc_g, dtype=float)
         self.dt = float(dt)
@@ -133,7 +133,7 @@ class GroundMotion:
     # ---------- Constructors ----------
 
     @classmethod
-    def from_at2(cls, file_path, scale_factor=9.81):
+    def from_at2(cls, file_path, scale_factor=1.0):
         """Creates a GroundMotion object from a PEER NGA (.AT2) file.
 
         Parameters
@@ -153,7 +153,51 @@ class GroundMotion:
         return cls(acc, dt, name=file_path.stem, scale_factor=scale_factor)
 
     @classmethod
-    def from_elcentro_chopra(cls, scale_factor=9.81):
+    def from_csv(cls, file_path, scale_factor=1.0):
+        """Creates a GroundMotion object from a two-column CSV record.
+
+        The first column is time in seconds (uniform step), the second is ground
+        acceleration in g. A header row is expected (e.g. ``time,acc (g)``).
+
+        Parameters
+        ----------
+        file_path : str or pathlib.Path
+            Path to the .csv file.
+        scale_factor : float, optional
+            Conversion factor to physical acceleration (default: 9.81).
+
+        Returns
+        -------
+        GroundMotion
+            A new GroundMotion instance.
+        """
+        file_path = Path(file_path)
+        df = pd.read_csv(file_path)
+        if df.shape[1] < 2:
+            raise ValueError(f"{file_path.name}: expected two columns (time [s], acceleration [g]).")
+        time = df.iloc[:, 0].to_numpy(dtype=float)
+        steps = np.diff(time)
+        if len(steps) == 0 or not np.allclose(steps, steps[0], rtol=1e-6, atol=1e-9):
+            raise ValueError(f"{file_path.name}: time column must have a uniform step.")
+        return cls(
+            acc_g=df.iloc[:, 1].to_numpy(dtype=float),
+            dt=float(steps[0]),
+            name=file_path.stem,
+            scale_factor=scale_factor,
+        )
+
+    @classmethod
+    def from_file(cls, file_path, scale_factor=1.0):
+        """Creates a GroundMotion from a record file, dispatching on extension (.AT2 or .csv)."""
+        suffix = Path(file_path).suffix.lower()
+        if suffix == ".at2":
+            return cls.from_at2(file_path, scale_factor=scale_factor)
+        if suffix == ".csv":
+            return cls.from_csv(file_path, scale_factor=scale_factor)
+        raise ValueError(f"Unsupported ground motion file type '{suffix}'. Use a PEER .AT2 or a .csv record.")
+
+    @classmethod
+    def from_elcentro_chopra(cls, scale_factor=1.0):
         """Creates a GroundMotion object from Chopra's El Centro 1940 CSV record.
 
         Parameters
@@ -166,20 +210,13 @@ class GroundMotion:
         GroundMotion
             GroundMotion instance for the 1940 El Centro record (dt=0.02 s).
         """
-        data_dir = cls._data_dir()
-        csv_file = data_dir / "elcentro_chopra.csv"
-        df = pd.read_csv(csv_file)
-        dt = float(df["time"].iloc[1] - df["time"].iloc[0])
-        return cls(
-            acc_g=df["acc (g)"].to_numpy(),
-            dt=dt,
-            name="elcentro_chopra",
-            component="hor1",
-            scale_factor=scale_factor,
-        )
+        gm = cls.from_csv(cls._data_dir() / "elcentro_chopra.csv", scale_factor=scale_factor)
+        gm.name = "elcentro_chopra"
+        gm.component = "hor1"
+        return gm
 
     @classmethod
-    def from_event(cls, event_name, component="hor1", base_dir=None, scale_factor=9.81):
+    def from_event(cls, event_name, component="hor1", base_dir=None, scale_factor=1.0):
         """Loads a ground motion from the built-in event database.
 
         Parameters
@@ -188,7 +225,8 @@ class GroundMotion:
             The name or alias of the earthquake event. Supported built-in events:
             - 'elcentro_chopra' (or 'chopra')
             - 'imperialValley_elCentro_1940' (or 'elcentro', 'imperial', 'imperial_valley')
-            - 'northridge_sylmar_1994' (or 'northridge', 'sylmar')
+            - 'northridge_sylmar_1994' (or 'northridge', 'sylmar'): RSN 1690 "Northridge-05", a 1994-01-18
+              aftershock (PGA ~0.09 g), not the 1994-01-17 main shock
             - 'lomaPrieta_corralitos_1989' (or 'loma_prieta', 'lomaprieta')
             - 'sanFernando_pacoidaDam_1971' (or 'san_fernando', 'sanfernando')
         component : str, optional
@@ -282,7 +320,7 @@ class GroundMotion:
         )
 
     @classmethod
-    def from_arrays(cls, acc_g, dt, name="user_motion", scale_factor=9.81):
+    def from_arrays(cls, acc_g, dt, name="user_motion", scale_factor=1.0):
         """Creates a GroundMotion object directly from arrays.
 
         Parameters

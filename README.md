@@ -183,6 +183,15 @@ results = sdf.find_response_ground_motion(gm, method='central_difference')
 print(results)
 ```
 
+Records can also be loaded from files: `GroundMotion.from_at2(path)` reads a PEER NGA `.AT2` record,
+`GroundMotion.from_csv(path)` reads a two-column CSV (time in s with a uniform step, acceleration in g), and
+`GroundMotion.from_file(path)` dispatches on the extension.
+
+> **Bundled records.** `imperialValley_elCentro_1940` (RSN 6), `lomaPrieta_corralitos_1989` (RSN 753) and
+> `sanFernando_pacoidaDam_1971` (RSN 77) are main-shock records. The `northridge_sylmar_1994` folder holds
+> **RSN 1690 "Northridge-05"**, a 1994-01-18 aftershock recorded at Sylmar County Hospital (PGA ≈ 0.09 g), not the
+> 1994-01-17 main shock (Sylmar Olive View, RSN 1086, PGA 0.6–0.8 g).
+
 ### Response Spectrum Generation (SDF)
 
 `structdyn` can be used to compute the response spectrum of a ground motion.
