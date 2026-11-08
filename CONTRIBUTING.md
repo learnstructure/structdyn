@@ -28,10 +28,10 @@ To ensure a consistent development experience, we recommend using a virtual envi
     ```
 
 3.  **Install dependencies:**
-    Install the project in editable mode (`-e`) along with the development and testing tools.
+    Install the project in editable mode (`-e`) together with the test dependencies, and `flake8` for style checks.
     ```bash
-    pip install -e .
-    pip install pytest flake8
+    pip install -e ".[test]"
+    pip install flake8
     ```
 
 ## How Can I Contribute?
@@ -69,9 +69,28 @@ If you're looking for a place to start, check out issues labelled **“good firs
     # Run the test suite with pytest
     pytest
     ```
-6.  **Commit your changes.** Use a clear and descriptive commit message.
-7.  **Push to your branch:** `git push origin feature/my-new-feature`.
-8.  **Open a pull request.** Go to the main StructDyn repository and open a pull request from your forked repository's branch. Provide a clear description of the changes you have made, referencing any relevant issues.
+6.  **Record the change.** Add a line under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md).
+7.  **Commit your changes.** Use a clear and descriptive commit message.
+8.  **Push to your branch:** `git push origin feature/my-new-feature`.
+9.  **Open a pull request.** Go to the main StructDyn repository and open a pull request from your forked repository's branch. Provide a clear description of the changes you have made, referencing any relevant issues. The test suite runs automatically on Linux, Windows, and macOS for every pull request, and it must pass before the pull request is merged.
+
+## Getting Help
+
+- **Questions about using `structdyn`**: ask in [GitHub Discussions](https://github.com/learnstructure/structdyn/discussions), or open an issue if you think the documentation is unclear or wrong.
+- **Bugs and feature requests**: open an [issue](https://github.com/learnstructure/structdyn/issues) as described above.
+- **Documentation**: [structdyn.readthedocs.io](https://structdyn.readthedocs.io/en/latest/).
+
+The maintainer aims to respond to new issues and pull requests within two weeks.
+
+## Governance
+
+`structdyn` is maintained by Abinash Mandal ([@learnstructure](https://github.com/learnstructure)), who reviews and merges pull requests and publishes releases.
+
+- **Scope.** `structdyn` analyses the dynamic response of single- and multi-degree-of-freedom systems with established methods of structural dynamics, implemented so that they can be checked against textbook examples. Finite element model building belongs to companion packages such as `fem2d` and `fem3d`, which pass their stiffness and mass matrices to `structdyn`.
+- **Decisions.** Changes to the public API or to the scope are proposed and discussed in a public issue before they are implemented. Breaking changes are marked as such in the changelog.
+- **Correctness.** Every new analysis method needs a test that reproduces a published example or an independent solution.
+- **Releases.** Versions follow [semantic versioning](https://semver.org/). Each release is recorded in [CHANGELOG.md](CHANGELOG.md), tagged on GitHub, published on PyPI, and archived on Zenodo.
+- **Maintainers.** Contributors with sustained contributions may be invited to become maintainers.
 
 ## Licensing of Contributions
 
