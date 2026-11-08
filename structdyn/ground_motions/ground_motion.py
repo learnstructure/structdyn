@@ -466,7 +466,13 @@ class GroundMotion:
         struct_core.GroundMotion
             Schema instance populated with this record.
         """
-        from struct_core import GroundMotion as CoreGroundMotion
+        try:
+            from struct_core import GroundMotion as CoreGroundMotion
+        except ImportError as exc:
+            raise ImportError(
+                "GroundMotion.to_core requires the optional package struct_core: "
+                "pip install git+https://github.com/learnstructure/struct_core"
+            ) from exc
 
         return CoreGroundMotion(
             id=id or self.name or "gm",

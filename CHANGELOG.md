@@ -14,6 +14,8 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 
 ### Changed
 - The workflow that builds the JOSS paper draft moved to `.github/workflows/`, where GitHub runs it, and runs only when the paper changes.
+- `GroundMotion.to_core` and response spectrum analysis with `params` raise an `ImportError` that names the missing optional package (`struct_core` or `struct_load`) and how to install it.
+- The tests of these two integrations are skipped when the optional packages are not installed; a separate CI job installs them from GitHub and runs the full suite.
 
 ## [0.8.0] - 2026-11-03
 

@@ -234,7 +234,14 @@ class ResponseSpectrumAnalysis:
             return sa_arr / (self.omega ** 2)
 
         elif self.params is not None:
-            from struct_load import evaluate_design_spectral_acceleration
+            try:
+                from struct_load import evaluate_design_spectral_acceleration
+            except ImportError as exc:
+                raise ImportError(
+                    "Response spectrum analysis with `params` requires the optional package "
+                    "struct_load: pip install git+https://github.com/learnstructure/struct_core "
+                    "git+https://github.com/learnstructure/struct_load"
+                ) from exc
 
             sa_vals = evaluate_design_spectral_acceleration(self.params, T)
             sa_arr = np.asarray(sa_vals, dtype=float) * self.scale_factor
