@@ -1,5 +1,13 @@
 name: Paper PDF
-on: [push]
+
+on:
+  push:
+    paths:
+      - paper.md
+      - paper.bib
+      - "paper/**"
+      - .github/workflows/paper.yml
+  workflow_dispatch:
 
 jobs:
   paper:
