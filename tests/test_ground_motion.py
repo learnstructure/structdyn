@@ -100,6 +100,7 @@ def test_ground_motion_response_spectrum():
 
 def test_ground_motion_to_core():
     """Verify GroundMotion.to_core returns a valid struct_core.GroundMotion model."""
+    pytest.importorskip("struct_core", reason="optional integration with struct_core")
     gm = GroundMotion.from_elcentro_chopra()
     core_gm = gm.to_core(id="ElCentro_Chopra")
 
