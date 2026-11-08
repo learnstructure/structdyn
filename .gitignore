@@ -16,6 +16,10 @@ build/
 # Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
+# Ignore editor settings and test caches
+.vscode/
+.pytest_cache/
+
 # Ignore system files
 .DS_Store
 Thumbs.db
