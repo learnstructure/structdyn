@@ -70,7 +70,8 @@ def test_rsa_asce7_spectrum_parameters():
     stiffness = [2e6, 2e6, 2e6]
     mdf = MDF.from_shear_building(masses, stiffness)
 
-    from struct_load import SeismicParameters
+    struct_load = pytest.importorskip("struct_load", reason="optional integration with struct_load")
+    SeismicParameters = struct_load.SeismicParameters
 
     sds = 1.0
     sd1 = 0.6

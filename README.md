@@ -1,5 +1,6 @@
 # Structural Dynamics Library (`structdyn`)
 
+[![Tests](https://github.com/learnstructure/structdyn/actions/workflows/tests.yml/badge.svg)](https://github.com/learnstructure/structdyn/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/structdyn)](https://pypi.org/project/structdyn)
 [![Downloads](https://static.pepy.tech/badge/structdyn)](https://pepy.tech/project/structdyn)
 [![GitHub repo](https://img.shields.io/badge/GitHub-structdyn-blue?logo=github)](https://github.com/learnstructure/structdyn)
@@ -289,7 +290,7 @@ For more detailed examples, including animations and advanced use cases, please 
 
 If you use `structdyn` in your research or work, please cite it as follows:
 
-> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis (Version 0.7.6) [Computer software]. https://doi.org/10.5281/zenodo.18676816
+> Mandal, A. (2026). StructDyn: An open-source Python library for structural dynamics analysis (Version 0.8.0) [Computer software]. https://doi.org/10.5281/zenodo.18676816
 
 Here is the citation in BibTeX format: 
 
@@ -316,4 +317,4 @@ pytest
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository, create a new branch for your feature or bug fix, and submit a pull request.
+Contributions are welcome! Please fork the repository, create a new branch for your feature or bug fix, and submit a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, how to get help, and how the project is maintained, and [CHANGELOG.md](CHANGELOG.md) for the changes in each release.
