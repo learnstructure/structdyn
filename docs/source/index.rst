@@ -52,7 +52,7 @@ Quick Example
    from structdyn.utils.helpers import elcentro_chopra
 
    elc = elcentro_chopra()
-   gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+   gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)  # record in g; analysis in m/s^2
 
    periods = np.arange(0, 5.01, 0.1)
    rs = ResponseSpectrum(periods, 0.02, gm)

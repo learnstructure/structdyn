@@ -12,6 +12,7 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 - Continuous integration: the test suite runs on Linux, Windows, and macOS with Python 3.11–3.13 for every push to `main` and every pull request.
 - This changelog, a support and governance section in `CONTRIBUTING.md`, and project links in `pyproject.toml`.
 - `paper/verification/`: scripts that check `structdyn` against closed-form solutions, exact ODE solutions, textbook results, and OpenSeesPy (linear and nonlinear SDF and MDF response histories), with the results table and figure.
+- `tests/test_examples.py`: every Python example of the README and of `examples/` runs in CI; examples that import `fem2d` or `struct_load` run in the integration job, which now also installs `fem2d`.
 
 ### Changed
 - The workflow that builds the JOSS paper draft moved to `.github/workflows/`, where GitHub runs it, and runs only when the paper changes.
@@ -20,6 +21,7 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 
 ### Fixed
 - `Bilinear`: the post-yield stiffness is now `alpha * k0`, as documented. The kinematic hardening modulus was set to `alpha * k0`, which gave a post-yield stiffness of `alpha / (1 + alpha) * k0` (0.0476 `k0` instead of 0.05 `k0` for `alpha = 0.05`). Nonlinear responses computed with `Bilinear` and `alpha > 0` change; the top-floor displacement of Chopra's Example 16.4 at 2.0 s changes from 3.9986 cm to 4.0374 cm, against 4.0387 cm in the book, which the test now checks. Found by comparing with OpenSees `Steel01`. `alpha` outside `0 <= alpha < 1` now raises a `ValueError`.
+- Documentation and examples brought in line with 0.8.0. The README examples and `docs/source/index.rst` built ground motions without `scale_factor`, so after the 0.8.0 default change they analysed records in g: the README printed a base shear of 29.7 kN for Example 13.8.2 instead of 291.2 kN. The same applied to `eg_el_centro.py`, `eg_res_spec_el_centro.py`, `eg_ground_motion.py`, `eg_rsa.py`, and `eg_viz.py`. The README also used the removed `sds`, `sd1`, and `tl` arguments of `ResponseSpectrumAnalysis`, the central difference method for a `fem2d` frame (not implemented), and `LoadHistory` without importing it; its `fem2d` example gave the mass density in kg/m³ (`rho=2400`) to a kN–m model, whose mass unit is the tonne, which made the frame 1,000 times too heavy. `eg_rsa.py` now runs without the optional `struct_load` and passes the required `system_type` when it is installed.
 
 ## [0.8.0] - 2026-11-03
 
@@ -32,7 +34,7 @@ They are part of the GitHub release v0.8.0 and its Zenodo archive, and reach PyP
 - `LoadHistory`: force histories applied to selected degrees of freedom of an MDF system.
 - `GroundMotion` scale factor for unit conversion and record scaling.
 - `GroundMotion.from_csv`, `GroundMotion.from_file`, `GroundMotion.from_elcentro_chopra`, `GroundMotion.available_events`, and the `pga`, `pga_g`, and `duration` properties (\*).
-- Response spectrum analysis with the ASCE 7 design spectrum (`SDS`, `SD1`, `TL`), CQC, SRSS, and ABS modal combination, effective modal masses, and mass participation ratios (\*).
+- Response spectrum analysis with a spectrum given as a function or as points (`spectrum_curve`), the ASCE 7 design spectrum through the optional package `struct_load` (`params`), CQC, SRSS, and ABS modal combination, effective modal masses, and mass participation ratios (\*).
 
 ### Changed
 - **Breaking**: `MDF.find_response` takes a `LoadHistory` instead of separate time and load arrays.

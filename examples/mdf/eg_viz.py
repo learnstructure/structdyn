@@ -20,7 +20,7 @@ shear_building.plot.mode_shape(mode_number=[1, 2, 3])
 # # 4. Simulate a dynamic response
 # # For example, let's apply a simple sinusoidal ground motion.
 elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)  # record in g; analysis in m/s^2
 
 response = shear_building.find_response_ground_motion(gm)
 

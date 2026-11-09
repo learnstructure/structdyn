@@ -4,9 +4,9 @@ from structdyn import GroundMotion, ResponseSpectrum, elcentro_chopra
 
 # Define el centro ground motion from Chopra's book- Appendix 6
 # elc = elcentro_chopra()
-# gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)   #method 1
-# gm = GroundMotion.from_elcentro_chopra()          #method 2
-gm = GroundMotion.from_event("elcentro_chopra")    #method 3
+# gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)   #method 1
+# gm = GroundMotion.from_elcentro_chopra(scale_factor=9.81)          #method 2
+gm = GroundMotion.from_event("elcentro_chopra", scale_factor=9.81)    #method 3; record in g; analysis in m/s^2
 
 # Define the period range of interest
 periods = np.arange(0, 5.01, 0.1)

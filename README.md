@@ -75,11 +75,9 @@ import numpy as np
 from structdyn.mdf.mdf import MDF
 from structdyn.ground_motions.ground_motion import GroundMotion
 from structdyn.mdf.analytical_methods.response_spectrum_analysis import ResponseSpectrumAnalysis
-from structdyn.utils.helpers import elcentro_chopra
 
-# 1. Define the ground motion (El Centro, from Chopra's book)
-elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+# 1. Define the ground motion (El Centro, from Chopra's book); the record is in g, the analysis in m/s^2
+gm = GroundMotion.from_elcentro_chopra(scale_factor=9.81)
 
 # 2. Define the 5-story shear building
 masses = np.ones(5) * 45000      # kg
@@ -114,10 +112,10 @@ frame.add_node(2, 6, 0)
 frame.add_node(3, 0, 3)
 frame.add_node(4, 6, 3)
 
-# Columns & Beam (E in kPa, A in m^2, I in m^4, rho in kg/m^3)
-frame.add_frame(1, 1, 3, E=2.5e7, A=0.16, I=0.002133, rho=2400)
-frame.add_frame(2, 2, 4, E=2.5e7, A=0.16, I=0.002133, rho=2400)
-frame.add_frame(3, 3, 4, E=2.5e7, A=0.12, I=0.001600, rho=2400)
+# Columns & Beam (E in kPa, A in m^2, I in m^4; rho in t/m^3, the mass unit of a kN-m model)
+frame.add_frame(1, 1, 3, E=2.5e7, A=0.16, I=0.002133, rho=2.4)
+frame.add_frame(2, 2, 4, E=2.5e7, A=0.16, I=0.002133, rho=2.4)
+frame.add_frame(3, 3, 4, E=2.5e7, A=0.12, I=0.001600, rho=2.4)
 
 frame.add_support(1, [True, True, True])
 frame.add_support(2, [True, True, True])
@@ -125,14 +123,16 @@ frame.add_support(2, [True, True, True])
 # 2. Bridge directly into structdyn MDF system with 5% modal damping
 mdf = MDF.from_fem2d(frame.structure, zeta=0.05, n_modes=2)
 
-# 3. Load earthquake record (El Centro 1940)
+# 3. Load earthquake record (El Centro 1940); the record is in g, the analysis in m/s^2
 elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)
 
 # 4. Compute time-history response to horizontal ground motion
-res = mdf.find_response_ground_motion(gm, direction="x", method="central_difference")
+res = mdf.find_response_ground_motion(gm, direction="x", method="newmark_beta")
 
-print(f"Max lateral displacement: {res['displacement'].abs().max().max():.4f} m")
+# Columns u1, u2, ... follow the free DOFs of the model; u1 is the horizontal displacement of node 3
+print(f"Period T1: {2 * 3.141592653589793 / mdf.modal.omega[0]:.3f} s")
+print(f"Max lateral displacement: {res['u1'].abs().max() * 1000:.2f} mm")
 ```
 
 For 3D space frames with 6 DOFs per node, use `MDF.from_fem3d(structure, zeta=0.05)` or the universal `MDF.from_fem(structure)`.
@@ -171,8 +171,8 @@ print(df_harm)
 from structdyn.sdf.sdf import SDF
 from structdyn.ground_motions.ground_motion import GroundMotion
 
-# Load the El Centro ground motion record
-gm = GroundMotion.from_event("el_centro_1940", component="RSN6_IMPVALL.I_I-ELC180")
+# Load the El Centro ground motion record (bundled; in g, converted to m/s^2)
+gm = GroundMotion.from_event("imperialValley_elCentro_1940", component="hor1", scale_factor=9.81)
 
 # Define an SDF system
 sdf = SDF(45594, 18 * 10**5, 0.05)
@@ -186,7 +186,8 @@ print(results)
 
 Records can also be loaded from files: `GroundMotion.from_at2(path)` reads a PEER NGA `.AT2` record,
 `GroundMotion.from_csv(path)` reads a two-column CSV (time in s with a uniform step, acceleration in g), and
-`GroundMotion.from_file(path)` dispatches on the extension.
+`GroundMotion.from_file(path)` dispatches on the extension. Records keep the units of the file (g) unless a
+`scale_factor` is given: 9.81 for an analysis in m/s², 386.09 for in/s².
 
 > **Bundled records.** `imperialValley_elCentro_1940` (RSN 6), `lomaPrieta_corralitos_1989` (RSN 753) and
 > `sanFernando_pacoidaDam_1971` (RSN 77) are main-shock records. The `northridge_sylmar_1994` folder holds
@@ -204,9 +205,9 @@ from structdyn.ground_motions.ground_motion import GroundMotion
 from structdyn.sdf.response_spectrum import ResponseSpectrum
 from structdyn.utils.helpers import elcentro_chopra
 
-# Define el centro ground motion from Chopra's book- Appendix 6
+# Define el centro ground motion from Chopra's book- Appendix 6 (in g, converted to m/s^2)
 elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)
 
 # Define the period range of interest
 periods = np.arange(0, 5.01, 0.1)
@@ -222,7 +223,7 @@ print(spectra["Sd"][20])  # result is 0.1896749378231744
 ### Non-linear analysis SDF system
 ```python
 # Example 5.5; Chopra A. K., Dynamics of structure, 5th edn
-from structdyn import SDF
+from structdyn import SDF, LoadHistory
 import numpy as np
 from structdyn.utils.material_models import ElasticPerfectlyPlastic
 
@@ -249,7 +250,7 @@ print(responses["displacement"][10])  # result is 0.03606328101158249
 
 ### Response Spectrum Analysis (MDF)
 
-`structdyn` supports Response Spectrum Analysis (RSA) with continuous user spectrum curves, ASCE 7 parameters ($S_{DS}, S_{D1}, T_L$), ground motion records, and modal combination rules (CQC, SRSS).
+`structdyn` supports Response Spectrum Analysis (RSA) with a spectrum given as a function or as points (`spectrum_curve`), the spectrum of a ground motion record (`gm`), or spectral values at the modal periods (`Sd`, `Sa`), and the modal combination rules CQC, SRSS, and ABS. With the optional package [`struct_load`](https://github.com/learnstructure/struct_load), the ASCE 7 design spectrum can also be given by its parameters (`params`).
 
 ```python
 import numpy as np
@@ -260,10 +261,17 @@ masses = np.ones(5) * 45000  # kg per floor
 stiffness = np.ones(5) * 54.82e5  # N/m
 mdf = MDF.from_shear_building(masses, stiffness)
 
-# Perform RSA with ASCE 7 design spectrum parameters
-rsa = ResponseSpectrumAnalysis(
-    mdf, ji=0.05, sds=1.0, sd1=0.6, tl=8.0, scale_factor=9.80665
-)
+# ASCE 7 design spectrum (in g) for SDS = 1.0 g and SD1 = 0.6 g, for periods below TL
+sds, sd1 = 1.0, 0.6
+t0, ts = 0.2 * sd1 / sds, sd1 / sds
+
+def design_spectrum(T):
+    if T < t0:
+        return sds * (0.4 + 0.6 * T / t0)
+    return sds if T <= ts else sd1 / T
+
+# Perform RSA with the design spectrum, converted from g to m/s^2
+rsa = ResponseSpectrumAnalysis(mdf, ji=0.05, spectrum_curve=design_spectrum, scale_factor=9.80665)
 
 # Modal properties
 print("Modal Periods (s):", rsa.T)

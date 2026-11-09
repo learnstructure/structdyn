@@ -36,7 +36,7 @@ jobs:
         run: pytest -v -rs tests
 
   integration:
-    name: Integration with struct_core and struct_load
+    name: Integration with fem2d, struct_core, and struct_load
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: Agg
@@ -56,6 +56,7 @@ jobs:
           python -m pip install ".[test]"
           python -m pip install git+https://github.com/learnstructure/struct_core
           python -m pip install git+https://github.com/learnstructure/struct_load
+          python -m pip install git+https://github.com/learnstructure/fem-2d
 
       - name: Run the full test suite without skips
         shell: bash

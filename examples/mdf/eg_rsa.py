@@ -28,7 +28,7 @@ print("=" * 60)
 # Method A: RSA from ground motion
 # -----------------------------------------------------------------------------
 elc = elcentro_chopra()
-gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02)
+gm = GroundMotion.from_arrays(elc["acc (g)"], 0.02, scale_factor=9.81)  # record in g; analysis in m/s^2
 rsa_gm = ResponseSpectrumAnalysis(mdf, ji=0.05, gm=gm)
 
 vb_gm = rsa_gm.modal_base_shear()
@@ -80,16 +80,22 @@ print("Combined Base Shear (CQC):", float(vb_cqc_curve[0]), "N")
 
 # -----------------------------------------------------------------------------
 # Method D: RSA from ASCE 7 parameters (SDS=1.0, SD1=0.6, TL=8.0)
+# Requires the optional package struct_load:
+#   pip install git+https://github.com/learnstructure/struct_core git+https://github.com/learnstructure/struct_load
 # -----------------------------------------------------------------------------
-from struct_load.codes.asce7_seismic import SeismicParameters
+import importlib.util
 
-rsa_asce = ResponseSpectrumAnalysis(
-    mdf, ji=0.05, params=SeismicParameters(sds=1.0, sd1=0.6, site_class="D", risk_category="II", tl=8.0), scale_factor=9.80665
-)
-vb_asce = rsa_asce.modal_base_shear()
-vb_cqc_asce = rsa_asce.combine_modal_responses(vb_asce, method="CQC")
+if importlib.util.find_spec("struct_load") is None:
+    print("\n--- Method D: not run (the optional package struct_load is not installed) ---")
+else:
+    from struct_load.codes.asce7_seismic import SeismicParameters
 
-print("\n--- Method D: From ASCE 7 Parameters (SDS=1.0g, SD1=0.6g) ---")
-print("ASCE 7 Sa at modal periods (m/s²):", np.round(rsa_asce.Sa, 3))
-print("Combined Base Shear (CQC):", float(vb_cqc_asce[0]), "N")
+    params = SeismicParameters(sds=1.0, sd1=0.6, site_class="D", risk_category="II", tl=8.0, system_type="rc_smf")
+    rsa_asce = ResponseSpectrumAnalysis(mdf, ji=0.05, params=params, scale_factor=9.80665)
+    vb_asce = rsa_asce.modal_base_shear()
+    vb_cqc_asce = rsa_asce.combine_modal_responses(vb_asce, method="CQC")
+
+    print("\n--- Method D: From ASCE 7 Parameters (SDS=1.0g, SD1=0.6g) ---")
+    print("ASCE 7 Sa at modal periods (m/s²):", np.round(rsa_asce.Sa, 3))
+    print("Combined Base Shear (CQC):", float(vb_cqc_asce[0]), "N")
 print("=" * 60)
