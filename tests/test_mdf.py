@@ -159,13 +159,15 @@ def test_mdf_nl_chopra_example_16_4():
         gm, inf_vec, method="newmark_beta", elements=elements, tol=1e-6, max_iter=20
     )
 
-    # 5. Assert the result
-    # The expected result is the displacement of the 5th story (u5) at time=2.0s.
-    # Recomputed after the post-yield stiffness of Bilinear was corrected to alpha * k0 (was 0.03998638459760687).
-    expected_u5_at_t20 = 0.04037380490631101
-    calculated_u5_at_t20 = response.iloc[20, 5]  # Corresponds to u5 at time=2.0
+    # 5. Assert the result: displacement of the 5th story (u5) at time = 2.0 s
+    calculated_u5_at_t20 = response.iloc[20, 5]
 
-    assert calculated_u5_at_t20 == pytest.approx(expected_u5_at_t20)
+    # Against the book: Chopra prints u5 = 4.0387 cm (the difference, 0.03 %, is within the rounding of the inputs)
+    assert calculated_u5_at_t20 == pytest.approx(0.040387, rel=1e-3)
+
+    # Regression value, computed after the post-yield stiffness of Bilinear was corrected to alpha * k0
+    # (the previous value, 0.03998638459760687, was 1.0 % below the book)
+    assert calculated_u5_at_t20 == pytest.approx(0.04037380490631101)
 
 
 def test_guyan_condensation_massless_dofs():

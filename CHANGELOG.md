@@ -18,7 +18,7 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 - The tests of these two integrations are skipped when the optional packages are not installed; a separate CI job installs them from GitHub and runs the full suite.
 
 ### Fixed
-- `Bilinear`: the post-yield stiffness is now `alpha * k0`, as documented. The kinematic hardening modulus was set to `alpha * k0`, which gave a post-yield stiffness of `alpha / (1 + alpha) * k0` (0.0476 `k0` instead of 0.05 `k0` for `alpha = 0.05`). Nonlinear responses computed with `Bilinear` and `alpha > 0` change; the top-floor displacement of the Example 16.4 test at 2.0 s changes by 1.0 %. Found by comparing with OpenSees `Steel01`. `alpha` outside `0 <= alpha < 1` now raises a `ValueError`.
+- `Bilinear`: the post-yield stiffness is now `alpha * k0`, as documented. The kinematic hardening modulus was set to `alpha * k0`, which gave a post-yield stiffness of `alpha / (1 + alpha) * k0` (0.0476 `k0` instead of 0.05 `k0` for `alpha = 0.05`). Nonlinear responses computed with `Bilinear` and `alpha > 0` change; the top-floor displacement of Chopra's Example 16.4 at 2.0 s changes from 3.9986 cm to 4.0374 cm, against 4.0387 cm in the book, which the test now checks. Found by comparing with OpenSees `Steel01`. `alpha` outside `0 <= alpha < 1` now raises a `ValueError`.
 
 ## [0.8.0] - 2026-11-03
 
