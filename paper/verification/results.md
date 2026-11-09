@@ -17,6 +17,7 @@
 | Ex. 13.8.2 building: periods | OpenSeesPy | T_5 (s) | 0.29665 | 0.29665 | 0.0e+00 | – |
 | Ex. 13.8.2 building, linear, El Centro, Newmark average acceleration: roof | OpenSeesPy | peak displacement (m) | 0.172988 | 0.172988 | 4.7e-14 | 5.4e-13 |
 | Ex. 13.8.2 building, bilinear stories (alpha = 5 %), El Centro: roof | OpenSeesPy | peak displacement (m) | 0.205104 | 0.205104 | 6.6e-14 | 4.8e-13 |
+| Ex. 16.4: bilinear 5-story building, half-cycle sine pulse | textbook (printed) | u_5 at t = 2.0 s (cm) | 4.03738 | 4.0387 | 3.3e-04 | – |
 | Ex. 13.8.2: response spectrum analysis | textbook (printed) | SRSS base shear (kN) | 291.256 | 291.2 | 1.9e-04 | – |
 
 History difference: largest difference over the response history, relative to the peak of the reference.

@@ -11,7 +11,7 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 ### Added
 - Continuous integration: the test suite runs on Linux, Windows, and macOS with Python 3.11–3.13 for every push to `main` and every pull request.
 - This changelog, a support and governance section in `CONTRIBUTING.md`, and project links in `pyproject.toml`.
-- `paper/verification/`: scripts that check `structdyn` against closed-form solutions, exact ODE solutions, a textbook result, and OpenSeesPy (linear and nonlinear SDF and MDF response histories), with the results table and figure.
+- `paper/verification/`: scripts that check `structdyn` against closed-form solutions, exact ODE solutions, textbook results, and OpenSeesPy (linear and nonlinear SDF and MDF response histories), with the results table and figure.
 
 ### Changed
 - The workflow that builds the JOSS paper draft moved to `.github/workflows/`, where GitHub runs it, and runs only when the paper changes.

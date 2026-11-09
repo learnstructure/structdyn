@@ -16,4 +16,5 @@ Ex. 13.8.2 building: periods,OpenSeesPy,T_4 (s),0.3383449610373153,0.33834496103
 Ex. 13.8.2 building: periods,OpenSeesPy,T_5 (s),0.2966503159643036,0.2966503159643036,0.0,,,
 "Ex. 13.8.2 building, linear, El Centro, Newmark average acceleration: roof",OpenSeesPy,peak displacement (m),0.1729881499125666,0.17298814991257466,4.6529874633610885e-14,,5.42718591352157e-13,5.42718591352157e-13
 "Ex. 13.8.2 building, bilinear stories (alpha = 5 %), El Centro: roof",OpenSeesPy,peak displacement (m),0.20510383434749355,0.20510383434748006,6.576771122836584e-14,peak story ductility 2.8,4.844617411472216e-13,4.934269898486192e-13
+"Ex. 16.4: bilinear 5-story building, half-cycle sine pulse",textbook (printed),u_5 at t = 2.0 s (cm),4.03738049063112,4.0387,0.0003267163614232387,book value printed to 0.0001 cm,,
 Ex. 13.8.2: response spectrum analysis,textbook (printed),SRSS base shear (kN),291.2557983447169,291.2,0.00019161519476954269,book value printed to 0.1 kN,,

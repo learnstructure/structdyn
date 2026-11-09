@@ -287,7 +287,21 @@ def main() -> None:
     rows[-1]["max_hist_diff_all_floors"] = history_diff(u_sd, u_op)
     histories.update(mdf_t=t_elc, mdf_u_sd=u_sd, mdf_u_op=u_op)
 
-    # 7. Textbook: Example 13.8.2, SRSS base shear from the printed spectral displacements
+    # 7. Textbook: Example 16.4, five-story building with bilinear stories under a half-cycle sine pulse
+    t16 = np.arange(0, 2.01, 0.1)
+    ag16 = 1.93 * np.sin(2 * np.pi * t16)
+    ag16[t16 > 1.0] = 0.0
+    building = MDF.from_shear_building(np.full(n, 0.2591e5), np.full(n, 100e5))
+    building.set_modal_damping(zeta=np.full(n, 0.05))
+    elements = [ShearStoryElement(Bilinear(uy=0.0125, fy=125e3, alpha=0.05), dof_indices=[0])]
+    elements += [ShearStoryElement(Bilinear(uy=0.0125, fy=125e3, alpha=0.05), dof_indices=[j - 1, j])
+                 for j in range(1, n)]
+    res = building.find_response_ground_motion(GroundMotion.from_arrays(ag16, 0.1), np.ones(n),
+                                               method="newmark_beta", elements=elements)
+    record("Ex. 16.4: bilinear 5-story building, half-cycle sine pulse", "textbook (printed)",
+           "u_5 at t = 2.0 s (cm)", float(res["u5"].iloc[20]) * 100, 4.0387, note="book value printed to 0.0001 cm")
+
+    # 8. Textbook: Example 13.8.2, SRSS base shear from the printed spectral displacements
     rsa = ResponseSpectrumAnalysis(linear, ji=0.05, Sd=[0.13649, 0.06557, 0.03823, 0.02227, 0.01657])
     vb = float(rsa.combine_modal_responses(rsa.modal_base_shear(), method="SRSS")[0])
     record("Ex. 13.8.2: response spectrum analysis", "textbook (printed)", "SRSS base shear (kN)", vb / 1e3, 291.2,
