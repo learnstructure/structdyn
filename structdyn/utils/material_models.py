@@ -144,11 +144,15 @@ class Bilinear(MaterialModel):
 
     def __init__(self, uy, fy, alpha=0.0):
         super().__init__()
+        if not 0.0 <= alpha < 1.0:
+            raise ValueError(f"alpha must satisfy 0 <= alpha < 1, got {alpha}.")
         self.uy = uy
         self.fy = fy
         self.k0 = fy / uy  # initial stiffness
         self.alpha = alpha
-        self.H = alpha * self.k0  # hardening modulus
+        # Kinematic hardening modulus for a post-yield tangent of alpha * k0:
+        # k0 * H / (k0 + H) = alpha * k0  =>  H = alpha * k0 / (1 - alpha)
+        self.H = alpha * self.k0 / (1.0 - alpha)
 
         # State variables
         self.u_p = 0.0  # committed plastic displacement

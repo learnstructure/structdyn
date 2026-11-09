@@ -160,8 +160,9 @@ def test_mdf_nl_chopra_example_16_4():
     )
 
     # 5. Assert the result
-    # The expected result is the displacement of the 5th story (u5) at time=2.0s
-    expected_u5_at_t20 = 0.03998638459760687
+    # The expected result is the displacement of the 5th story (u5) at time=2.0s.
+    # Recomputed after the post-yield stiffness of Bilinear was corrected to alpha * k0 (was 0.03998638459760687).
+    expected_u5_at_t20 = 0.04037380490631101
     calculated_u5_at_t20 = response.iloc[20, 5]  # Corresponds to u5 at time=2.0
 
     assert calculated_u5_at_t20 == pytest.approx(expected_u5_at_t20)
