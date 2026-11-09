@@ -1,0 +1,5 @@
+openseespy==3.8.0.0
+intel-fortran-rt; sys_platform == "win32"
+scipy
+pandas
+matplotlib

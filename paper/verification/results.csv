@@ -1,0 +1,19 @@
+case,reference,quantity,structdyn,reference_value,rel_diff,note,max_hist_diff,max_hist_diff_all_floors
+Ex. 10.4: 2-story shear building,closed form,omega_1 (rad/s),0.7071067811865475,0.7071067811865476,1.570092458683775e-16,,,
+Ex. 10.4: 2-story shear building,closed form,omega_2 (rad/s),1.4142135623730951,1.4142135623730951,0.0,,,
+"Cantilever, massless rotation",closed form,omega_1 (rad/s),1.443375672974064,1.4433756729740645,3.076740298213702e-16,,,
+"Ex. 5.1: linear SDF, half-sine pulse, interpolation",exact ODE,peak displacement (m),0.041376927488259614,0.04137692748825846,2.7838132456197053e-14,,1.427542786345647e-13,
+"Sec. 6.4: SDF (Tn = 0.5 s, zeta = 2 %), El Centro, interpolation",exact ODE,peak displacement (m),0.0679400697200714,0.0679400697200719,7.353545016067606e-15,,1.0908237186920601e-13,
+"Ex. 5.2: linear SDF, central difference",OpenSeesPy,peak displacement (m),0.043911359495853,0.043911359495852995,1.5802047542077443e-16,,5.530716639727105e-16,
+"Ex. 5.4: linear SDF, Newmark linear acceleration",OpenSeesPy,peak displacement (m),0.041061373373478795,0.04106137337347876,8.449417705532725e-16,,2.027860249327854e-15,
+"Ex. 5.5: elastoplastic SDF, Newmark average acceleration",OpenSeesPy,peak displacement (m),0.06010401578481231,0.06010401578481229,3.4634427400409845e-16,,4.617923653387979e-16,
+"Linear SDF (Tn = 0.5 s, zeta = 5 %), El Centro, Newmark average acceleration",OpenSeesPy,peak displacement (m),0.056920384728760154,0.05692038472875973,7.436220435883266e-15,,2.3799410170851565e-12,
+"Bilinear SDF (alpha = 5 %, fy = 0.25 f0), El Centro, Newmark average acceleration",OpenSeesPy,peak displacement (m),0.043877964176169695,0.043877964176169904,4.744222322654435e-15,ductility 3.1,2.5954948461487023e-12,
+Ex. 13.8.2 building: periods,OpenSeesPy,T_1 (s),2.000029633183373,2.0000296331833747,8.881652601181152e-16,,,
+Ex. 13.8.2 building: periods,OpenSeesPy,T_2 (s),0.6851796032392725,0.6851796032392723,3.2406773913772047e-16,,,
+Ex. 13.8.2 building: periods,OpenSeesPy,T_3 (s),0.4346479778585282,0.4346479778585284,3.8314558488059435e-16,,,
+Ex. 13.8.2 building: periods,OpenSeesPy,T_4 (s),0.3383449610373153,0.3383449610373152,3.281334591836031e-16,,,
+Ex. 13.8.2 building: periods,OpenSeesPy,T_5 (s),0.2966503159643036,0.2966503159643036,0.0,,,
+"Ex. 13.8.2 building, linear, El Centro, Newmark average acceleration: roof",OpenSeesPy,peak displacement (m),0.1729881499125666,0.17298814991257466,4.6529874633610885e-14,,5.42718591352157e-13,5.42718591352157e-13
+"Ex. 13.8.2 building, bilinear stories (alpha = 5 %), El Centro: roof",OpenSeesPy,peak displacement (m),0.20510383434749355,0.20510383434748006,6.576771122836584e-14,peak story ductility 2.8,4.844617411472216e-13,4.934269898486192e-13
+Ex. 13.8.2: response spectrum analysis,textbook (printed),SRSS base shear (kN),291.2557983447169,291.2,0.00019161519476954269,book value printed to 0.1 kN,,
