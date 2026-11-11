@@ -3,7 +3,7 @@ import pandas as pd
 from structdyn.utils.stability_checks import check_stability_newmark
 
 
-def get_newmark_parameters(acc_type="linear"):
+def get_newmark_parameters(acc_type="average"):
     """
     Returns Newmark-beta parameters (beta, gamma).
 
@@ -11,7 +11,7 @@ def get_newmark_parameters(acc_type="linear"):
     ----------
     acc_type : str
         'average' : Constant-average acceleration (unconditionally stable)
-        'linear'  : Linear acceleration
+        'linear'  : Linear acceleration (stable for dt / Tn <= 0.551)
     """
     if acc_type == "average":
         beta, gamma = 1 / 4, 1 / 2
@@ -43,7 +43,7 @@ class NewmarkBeta:
         dt,
         u0=0.0,
         v0=0.0,
-        acc_type="linear",
+        acc_type="average",
     ):
         """
         Initializes the NewmarkBeta solver.
@@ -60,9 +60,9 @@ class NewmarkBeta:
             Initial velocity at time t=0, by default 0.0.
         acc_type : {"average", "linear"}, optional
             The assumption for the variation of acceleration over a time step,
-            by default "linear".
+            by default "average".
             - "average": Constant-average acceleration (unconditionally stable).
-            - "linear": Linear acceleration (unconditionally stable).
+            - "linear": Linear acceleration (stable for dt / Tn <= 0.551).
         """
         self.dt = dt
         self.beta, self.gamma = get_newmark_parameters(acc_type)

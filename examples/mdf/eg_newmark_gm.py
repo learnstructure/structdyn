@@ -21,8 +21,8 @@ inf_vec = np.ones(5)
 
 # Run analysis
 response = mdf.find_response_ground_motion(
-    gm, inf_vec, method="newmark_beta", use_modal=True, n_modes=2
-)
+    gm, inf_vec, method="newmark_beta", use_modal=True, n_modes=2, acc_type="linear"
+)  # the linear acceleration method of the example
 # Note we can get more accurate results by considering more modes. Also if we remove use_modal, then direct integration of coupled equations would give more accurate results.
 print(response.iloc[:, :6])
 print(response["u5"][20])  # result = 0.05888401249961952

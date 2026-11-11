@@ -15,6 +15,6 @@ p = 50 * np.sin(np.pi * time / 0.6) * 1000
 p[time >= 0.6] = 0
 load = LoadHistory(time, p, dof=[0])
 
-res = mdf.find_response(load, method="newmark_beta")
+res = mdf.find_response(load, method="newmark_beta", acc_type="linear")
 print(res)
 print(res['a2'].iloc[-1])  # result is -0.05480023537616319

@@ -4,7 +4,7 @@ from scipy.linalg import lu_factor, lu_solve
 from structdyn.utils.stability_checks import check_stability_newmark
 
 
-def get_newmark_parameters(acc_type="linear"):
+def get_newmark_parameters(acc_type="average"):
     if acc_type == "average":  # Constant average acceleration
         beta, gamma = 1 / 4, 1 / 2
     elif acc_type == "linear":  # Linear acceleration
@@ -29,7 +29,7 @@ class NewmarkBetaMDF:
         dt,
         u0=None,
         v0=None,
-        acc_type="linear",
+        acc_type="average",
         use_modal=False,
         n_modes=None,
     ):
@@ -47,7 +47,8 @@ class NewmarkBetaMDF:
         v0 : array-like, optional
             The initial velocity vector of shape (ndof,). Defaults to a zero vector.
         acc_type : str, optional
-            The assumed acceleration variation ('average' or 'linear'). Defaults to "linear".
+            The assumed acceleration variation: 'average' (constant average acceleration, unconditionally
+            stable; the default) or 'linear' (linear acceleration, stable for dt / Tn <= 0.551).
         use_modal : bool, optional
             If True, integration is performed in modal coordinates. Requires pre-computed mode shapes.
             Defaults to False.

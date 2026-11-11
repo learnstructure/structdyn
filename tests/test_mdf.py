@@ -91,8 +91,8 @@ def test_example_16_1_ground_motion_modal():
 
     # Response analysis
     response = mdf.find_response_ground_motion(
-        gm, inf_vec, method="newmark_beta", use_modal=True, n_modes=2
-    )
+        gm, inf_vec, method="newmark_beta", use_modal=True, n_modes=2, acc_type="linear"
+    )  # Chopra uses the linear acceleration method in this example
 
     expected = 0.05888401249961952
     assert response["u5"][20] == pytest.approx(expected, rel=1e-5)

@@ -456,7 +456,9 @@ class MDF:
                 elif direction in ("z", "2"):
                     target_sub_dof = 2 if dofs_per_node == 6 else 1
                 else:
-                    target_sub_dof = 0
+                    raise ValueError(
+                        f"Unrecognized ground motion direction {direction!r}; use 'x', 'y' or 'z' (or 0, 1, 2)."
+                    )
 
                 inf_vec = np.zeros(self.ndof)
                 for i, dof_idx in enumerate(struct.free_dofs):

@@ -95,12 +95,19 @@ class NewmarkBetaNonLinear:
         # Commit initial state (if nonlinear)
         if hasattr(self.system, "commit_elements"):
             self.system.commit_elements(u[0])
-        M_eff = self.system.M.copy()
-        if np.any(np.diag(M_eff) <= 0):
-            max_m = np.max(np.diag(M_eff))
-            eps = 1e-9 * max_m if max_m > 0 else 1e-9
-            M_eff += eps * np.eye(ndof)
-        a[0] = np.linalg.solve(M_eff, p[0] - self.system.C @ v[0] - Fs0)
+        # Initial acceleration from M a0 = p0 - C v0 - Fs0 on the DOFs with mass; the DOFs without mass carry no
+        # inertia (their acceleration is not needed by the integration and is set to zero)
+        M = self.system.M
+        diag_m = np.diag(M)
+        max_m = np.max(diag_m) if diag_m.size else 0.0
+        if max_m <= 0.0:
+            raise ValueError("Nonlinear Newmark analysis needs at least one degree of freedom with positive mass.")
+        massed = np.where(diag_m > 1e-12 * max_m)[0]
+        rhs = p[0] - self.system.C @ v[0] - Fs0
+        try:
+            a[0, massed] = np.linalg.solve(M[np.ix_(massed, massed)], rhs[massed])
+        except np.linalg.LinAlgError as exc:
+            raise ValueError(f"The mass matrix of the DOFs with mass is singular ({exc}).") from exc
         fs_hist[0] = Fs0
 
         # Check for stability

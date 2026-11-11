@@ -65,9 +65,11 @@ class ModalAnalysis:
             # All DOFs have mass: direct generalized eigensolution
             try:
                 eigenvals, eigenvecs = eigh(K, M)
-            except np.linalg.LinAlgError:
-                eps = 1e-8 * max_m
-                eigenvals, eigenvecs = eigh(K, M + eps * np.eye(K.shape[0]))
+            except np.linalg.LinAlgError as exc:
+                raise ValueError(
+                    "Cannot perform modal analysis: the mass matrix is not positive definite "
+                    f"(scipy.linalg.eigh: {exc}). Check for negative or coupled zero masses."
+                ) from exc
         else:
             # Massless DOFs present: exact Guyan static condensation
             K_dd = K[np.ix_(dyn_idx, dyn_idx)]
@@ -76,24 +78,39 @@ class ModalAnalysis:
             K_ss = K[np.ix_(sta_idx, sta_idx)]
             M_dd = M[np.ix_(dyn_idx, dyn_idx)]
 
+            # Exact static condensation since M_ss = 0, M_ds = 0
+            if np.linalg.matrix_rank(K_ss) < K_ss.shape[0]:
+                raise ValueError(
+                    "Cannot perform modal analysis: the stiffness matrix of the massless DOFs is singular, so "
+                    "the static condensation has no solution. The model has a mechanism among the "
+                    f"{len(sta_idx)} DOFs without mass (e.g. an unrestrained rotation or a hinge chain)."
+                )
+            T_s = -np.linalg.solve(K_ss, K_sd)
+            K_red = K_dd + K_ds @ T_s
+            K_red = 0.5 * (K_red + K_red.T)
             try:
-                # Exact static condensation since M_ss = 0, M_ds = 0
-                T_s = -np.linalg.solve(K_ss, K_sd)
-                K_red = K_dd + K_ds @ T_s
-                K_red = 0.5 * (K_red + K_red.T)
-
                 eigenvals, phi_d = eigh(K_red, M_dd)
-                phi_s = T_s @ phi_d
-                eigenvecs = np.zeros((K.shape[0], len(eigenvals)), dtype=float)
-                eigenvecs[dyn_idx, :] = phi_d
-                eigenvecs[sta_idx, :] = phi_s
-            except np.linalg.LinAlgError:
-                # Fallback if K_ss is singular (e.g. mechanism among massless DOFs)
-                eps = 1e-8 * max_m
-                eigenvals, eigenvecs = eigh(K, M + eps * np.eye(K.shape[0]))
+            except np.linalg.LinAlgError as exc:
+                raise ValueError(
+                    "Cannot perform modal analysis: the mass matrix of the DOFs with mass is not positive "
+                    f"definite (scipy.linalg.eigh: {exc})."
+                ) from exc
+            phi_s = T_s @ phi_d
+            eigenvecs = np.zeros((K.shape[0], len(eigenvals)), dtype=float)
+            eigenvecs[dyn_idx, :] = phi_d
+            eigenvecs[sta_idx, :] = phi_s
 
-        # Remove small negative numerical values
+        # Negative eigenvalues: round-off of a zero eigenvalue (a rigid-body mode) is set to zero; a larger
+        # one means the stiffness matrix is not positive semi-definite, i.e. an unstable model
         eigenvals = np.real(eigenvals)
+        scale = np.max(np.abs(eigenvals)) if eigenvals.size else 0.0
+        round_off = 1e-8 * scale
+        if np.any(eigenvals < -round_off):
+            worst = float(np.min(eigenvals))
+            raise ValueError(
+                f"Cannot perform modal analysis: negative eigenvalue omega^2 = {worst:.6g} (largest magnitude "
+                f"{scale:.6g}). The stiffness matrix is not positive semi-definite: the model is unstable."
+            )
         eigenvals[eigenvals < 0] = 0.0
 
         omega = np.sqrt(eigenvals)
