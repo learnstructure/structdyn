@@ -1,4 +1,6 @@
 from scipy.linalg import eigh
+import scipy.sparse as sp
+from scipy.sparse.linalg import LinearOperator, eigsh, splu
 import numpy as np
 import pandas as pd
 from structdyn.sdf.sdf import SDF
@@ -46,7 +48,15 @@ class ModalAnalysis:
             Natural circular frequencies (rad/s)
         phi : ndarray
             Mode shape matrix (columns are modes)
+
+        A sparse system (``mdf.is_sparse``, more than ``DENSE_DOF_LIMIT`` DOFs) is solved with
+        ``scipy.sparse.linalg.eigsh`` in shift-invert mode at sigma = 0: the eigenvalues of K phi = lambda M phi
+        nearest zero, from a sparse LU factorization of K. DOFs without mass need no condensation in this mode: they
+        give infinite eigenvalues, which shift-invert maps to zero. ``n_modes`` is then required.
         """
+        if getattr(self.mdf, "is_sparse", False):
+            return self._sparse_modal_analysis(n_modes, dof_normalize)
+
         M = self.mdf.M.copy()
         K = self.mdf.K.copy()
 
@@ -132,6 +142,48 @@ class ModalAnalysis:
         if dof_normalize is not None:
             self.normalize_modes(dof=dof_normalize)
 
+        return self.omega, self.phi
+
+    def _sparse_modal_analysis(self, n_modes, dof_normalize):
+        """Lowest modes of a sparse system by shift-invert Lanczos (ARPACK) at sigma = 0."""
+        K = self.mdf.K.tocsc()
+        M = self.mdf.M.tocsc()
+        n = K.shape[0]
+        if n_modes is None:
+            raise ValueError(
+                f"Modal analysis of a sparse system ({n} DOFs) needs n_modes: the sparse eigensolver computes the "
+                f"lowest modes only."
+            )
+        if n_modes < 1 or n_modes >= n:
+            raise ValueError(f"n_modes must be between 1 and ndof - 1 = {n - 1} for a sparse system")
+        if M.diagonal().max(initial=0.0) <= 0.0:
+            raise ValueError(
+                "Cannot perform modal analysis: mass matrix has no degrees of freedom with positive mass."
+            )
+        try:
+            lu = splu(K)
+        except RuntimeError as exc:  # SuperLU: "Factor is exactly singular"
+            raise ValueError(
+                f"Cannot perform modal analysis: the stiffness matrix is singular ({exc}), so the shift-invert "
+                f"eigensolver cannot factor it. The model has a mechanism or an unrestrained rigid-body motion."
+            ) from exc
+        op_inv = LinearOperator((n, n), matvec=lu.solve, dtype=float)
+        eigenvals, eigenvecs = eigsh(K, k=n_modes, M=M, sigma=0.0, which="LM", OPinv=op_inv)
+        if not np.all(np.isfinite(eigenvals)):
+            raise ValueError("Cannot perform modal analysis: the sparse eigensolver returned non-finite values.")
+
+        scale = np.max(np.abs(eigenvals)) if eigenvals.size else 0.0
+        if np.any(eigenvals < -1e-8 * scale):
+            raise ValueError(
+                f"Cannot perform modal analysis: negative eigenvalue omega^2 = {float(np.min(eigenvals)):.6g}. The "
+                f"stiffness matrix is not positive semi-definite: the model is unstable."
+            )
+        eigenvals[eigenvals < 0] = 0.0
+        omega = np.sqrt(eigenvals)
+        idx = np.argsort(omega)
+        self.omega, self.phi = omega[idx], eigenvecs[:, idx]
+        if dof_normalize is not None:
+            self.normalize_modes(dof=dof_normalize)
         return self.omega, self.phi
 
     def normalize_modes(self, dof=-1):

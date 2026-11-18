@@ -1,8 +1,16 @@
 import numpy as np
+import scipy.sparse as sp
 from .analytical_methods.modal_analysis import ModalAnalysis
 from structdyn.ground_motions import GroundMotion
 from structdyn.loads import LoadHistory
 from structdyn.mdf.mdf_helpers.visualization import ShearBuildingVisualizer
+
+
+# Largest number of DOFs solved with dense matrices. Sparse K and M (from a finite element model, e.g. fem3d) with
+# at most this many DOFs are converted to dense arrays, so that every method of MDF works on them unchanged. Larger
+# sparse systems stay sparse: modal analysis uses a sparse eigensolver (scipy.sparse.linalg.eigsh, shift-invert),
+# and methods that need dense matrices (damping matrix, time-history integration) refuse them.
+DENSE_DOF_LIMIT = 2000
 
 
 class MDF:
@@ -22,25 +30,37 @@ class MDF:
 
     Parameters
     ----------
-    M : (n, n) array-like
+    M : (n, n) array-like or scipy.sparse matrix
         The mass matrix of the system.
-    K : (n, n) array-like
+    K : (n, n) array-like or scipy.sparse matrix
         The stiffness matrix of the system.
     C : (n, n) array-like, optional
         The damping matrix. If not provided, it is initialized as a zero matrix.
+
+    Sparse ``K`` and ``M`` with at most ``DENSE_DOF_LIMIT`` DOFs are made dense. Above it they stay sparse
+    (``is_sparse``): modal and response spectrum analysis work; the damping matrix and time-history integration
+    are refused.
     """
 
     def __init__(self, M, K, C=None, elements=None):
         """
         Initializes the MDF system with mass, stiffness, and optional damping matrices.
         """
-        self.M = np.asarray(M, dtype=float)
-        self.K = np.asarray(K, dtype=float)
+        n = M.shape[0] if hasattr(M, "shape") else len(M)
+        self.is_sparse = (sp.issparse(M) or sp.issparse(K)) and n > DENSE_DOF_LIMIT
+        if self.is_sparse:
+            self.M = sp.csr_matrix(M, dtype=float)
+            self.K = sp.csr_matrix(K, dtype=float)
+        else:
+            self.M = M.toarray() if sp.issparse(M) else np.asarray(M, dtype=float)
+            self.K = K.toarray() if sp.issparse(K) else np.asarray(K, dtype=float)
 
         if C is None:
-            self.C = np.zeros_like(self.M)
+            self.C = sp.csr_matrix(self.M.shape, dtype=float) if self.is_sparse else np.zeros_like(self.M)
         else:
-            self.C = np.asarray(C, dtype=float)
+            self.C = C.toarray() if sp.issparse(C) and not self.is_sparse else (
+                sp.csr_matrix(C, dtype=float) if self.is_sparse else np.asarray(C, dtype=float))
+        self.modal_damping_ratios = None
 
         self.elements = elements  # list of Element objects (None means linear)
 
@@ -65,6 +85,15 @@ class MDF:
         if self.C.shape != self.M.shape:
             raise ValueError("C must have same dimensions as M.")
 
+    def _require_dense(self, what: str) -> None:
+        """Refuse an operation that needs dense matrices on a sparse system."""
+        if self.is_sparse:
+            raise ValueError(
+                f"{what} needs dense matrices, but this system has {self.ndof} DOFs (more than DENSE_DOF_LIMIT = "
+                f"{DENSE_DOF_LIMIT}) and is kept sparse. Use modal or response spectrum analysis, which take the "
+                f"modal damping ratios directly."
+            )
+
     def set_modal_damping(self, zeta, n_modes=None):
         """
         Sets the damping matrix C based on modal damping ratios (Rayleigh damping).
@@ -86,6 +115,7 @@ class MDF:
         C : ndarray
             The resulting (n, n) damping matrix.
         """
+        self._require_dense("A classical damping matrix C")
         omega, phi = self.modal.modal_analysis(n_modes=n_modes)
 
         num_modes = phi.shape[1]
@@ -195,7 +225,10 @@ class MDF:
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
-            instance.set_modal_damping(zeta, n_modes=n_modes)
+            if instance.is_sparse:
+                instance.modal_damping_ratios = np.asarray(zeta, dtype=float)
+            else:
+                instance.set_modal_damping(zeta, n_modes=n_modes)
 
         return instance
 
@@ -251,7 +284,10 @@ class MDF:
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
-            instance.set_modal_damping(zeta, n_modes=n_modes)
+            if instance.is_sparse:
+                instance.modal_damping_ratios = np.asarray(zeta, dtype=float)
+            else:
+                instance.set_modal_damping(zeta, n_modes=n_modes)
 
         return instance
 
@@ -294,7 +330,10 @@ class MDF:
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
-            instance.set_modal_damping(zeta, n_modes=n_modes)
+            if instance.is_sparse:
+                instance.modal_damping_ratios = np.asarray(zeta, dtype=float)
+            else:
+                instance.set_modal_damping(zeta, n_modes=n_modes)
 
         return instance
 
@@ -357,6 +396,7 @@ class MDF:
         >>> load = LoadHistory(time_steps=t, load_values=F_2d)  # F_2d: (n_t, ndof)
         >>> mdf.find_response(load, method="newmark_beta")
         """
+        self._require_dense("Time-history integration")
         if not isinstance(load, LoadHistory):
             raise TypeError(
                 "find_response expects a LoadHistory as its first argument. "
@@ -435,6 +475,7 @@ class MDF:
         DataFrame
             A pandas DataFrame containing the displacement, velocity, and acceleration response history.
         """
+        self._require_dense("Time-history integration")
         if not isinstance(gm, GroundMotion):
             raise TypeError("gm must be a GroundMotion object")
         time = np.asarray(gm.time)

@@ -137,6 +137,8 @@ print(f"Max lateral displacement: {res['u1'].abs().max() * 1000:.2f} mm")
 
 For 3D space frames with 6 DOFs per node, use `MDF.from_fem3d(structure, zeta=0.05)` or the universal `MDF.from_fem(structure)`.
 
+`MDF` also accepts sparse (`scipy.sparse`) stiffness and mass matrices, as fem3d produces them. Systems with up to `DENSE_DOF_LIMIT` (2000) DOFs are made dense. Larger ones stay sparse: modal and response spectrum analysis use `scipy.sparse.linalg.eigsh` (shift-invert at zero, `n_modes` required), and the damping matrix and time-history integration are refused.
+
 ## Ecosystem Integration
 
 `structdyn` forms the dynamic analysis engine of the [Structural Engineering Ecosystem](../README.md):

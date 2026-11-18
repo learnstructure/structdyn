@@ -9,6 +9,15 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 ## [Unreleased]
 
 ### Added
+- Sparse systems: `MDF` accepts `scipy.sparse` K and M. Up to `DENSE_DOF_LIMIT` (2000) DOFs they are made
+  dense, so every method works as before. Larger sparse systems stay sparse (`MDF.is_sparse`):
+  `ModalAnalysis.modal_analysis` uses `scipy.sparse.linalg.eigsh` in shift-invert mode at sigma = 0 with a
+  sparse LU of K, which needs no condensation of DOFs without mass, and requires `n_modes`. A singular K gives a
+  clear error. Response spectrum analysis works on sparse systems; `from_fem`, `from_fem2d`, and `from_fem3d`
+  store the damping ratios (`MDF.modal_damping_ratios`) instead of forming a dense damping matrix. The damping
+  matrix (`set_modal_damping`) and time-history integration refuse sparse systems with a clear message. Tests:
+  `tests/test_sparse_modal.py` (closed-form chain frequencies on both sides of the limit; agreement with the
+  dense path with massless DOFs; the errors).
 - Continuous integration: the test suite runs on Linux, Windows, and macOS with Python 3.11–3.13 for every push to `main` and every pull request.
 - This changelog, a support and governance section in `CONTRIBUTING.md`, and project links in `pyproject.toml`.
 - `paper/verification/`: scripts that check `structdyn` against closed-form solutions, exact ODE solutions, textbook results, and OpenSeesPy (linear and nonlinear SDF and MDF response histories), with the results table and figure.
