@@ -158,6 +158,8 @@ class ResponseSpectrumAnalysis:
             return vec
 
         struct = getattr(self.mdf, "structure", None)
+        if struct is not None and hasattr(struct, "influence_vector"):
+            return struct.influence_vector(direction)
         if struct is not None and hasattr(struct, "nodes") and hasattr(struct, "free_dofs"):
             first_node = next(iter(struct.nodes.values()))
             num_node_dofs = len(first_node.dofs)
@@ -462,6 +464,12 @@ class ResponseSpectrumAnalysis:
         modal_elem_forces: Dict[Any, np.ndarray] = {}
         combined_elem_forces: Dict[Any, np.ndarray] = {}
 
+        if hasattr(struct, "expand_displacements"):
+            full_u = struct.expand_displacements(self.u)
+        else:
+            full_u = np.zeros((struct.neq, self.n_modes), dtype=float)
+            full_u[struct.free_dofs, :] = self.u
+
         for eid, el in struct.elements.items():
             dofs = el.node_i.dofs + el.node_j.dofs
             n_dofs = len(dofs)
@@ -471,9 +479,7 @@ class ResponseSpectrumAnalysis:
             k_local = el.local_stiffness()
 
             for m in range(self.n_modes):
-                d_m = np.zeros(struct.neq, dtype=float)
-                d_m[struct.free_dofs] = self.u[:, m]
-                u_elem_g = d_m[dofs]
+                u_elem_g = full_u[dofs, m]
                 u_elem_local = T @ u_elem_g
                 elem_modal_forces[:, m] = k_local @ u_elem_local
 

@@ -221,7 +221,7 @@ class MDF:
 
         if zeta is not None:
             if isinstance(zeta, (int, float)):
-                n = len(structure.free_dofs)
+                n = instance.ndof
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
@@ -280,7 +280,7 @@ class MDF:
 
         if zeta is not None:
             if isinstance(zeta, (int, float)):
-                n = len(structure.free_dofs)
+                n = instance.ndof
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
@@ -326,7 +326,7 @@ class MDF:
 
         if zeta is not None:
             if isinstance(zeta, (int, float)):
-                n = len(structure.free_dofs)
+                n = instance.ndof
                 if n_modes is not None:
                     n = min(n, n_modes)
                 zeta = [float(zeta)] * n
@@ -483,28 +483,30 @@ class MDF:
         if inf_vec is None:
             if hasattr(self, "structure") and self.structure is not None:
                 struct = self.structure
-                # Determine DOF stride per node: 6 for 3D, 3 for 2D
-                dofs_per_node = 3
-                if any(len(getattr(n, "dofs", [])) == 6 for n in getattr(struct, "nodes", {}).values()):
-                    dofs_per_node = 6
-
-                # Direction can be passed via kwargs or default to primary translation
                 direction = str(kwargs.pop("direction", "x")).lower()
-                if direction in ("x", "0"):
-                    target_sub_dof = 0
-                elif direction in ("y", "1"):
-                    target_sub_dof = 1
-                elif direction in ("z", "2"):
-                    target_sub_dof = 2 if dofs_per_node == 6 else 1
+                if hasattr(struct, "influence_vector"):
+                    inf_vec = struct.influence_vector(direction)
                 else:
-                    raise ValueError(
-                        f"Unrecognized ground motion direction {direction!r}; use 'x', 'y' or 'z' (or 0, 1, 2)."
-                    )
+                    # Determine DOF stride per node: 6 for 3D, 3 for 2D
+                    dofs_per_node = 3
+                    if any(len(getattr(n, "dofs", [])) == 6 for n in getattr(struct, "nodes", {}).values()):
+                        dofs_per_node = 6
 
-                inf_vec = np.zeros(self.ndof)
-                for i, dof_idx in enumerate(struct.free_dofs):
-                    if dof_idx % dofs_per_node == target_sub_dof:
-                        inf_vec[i] = 1.0
+                    if direction in ("x", "0"):
+                        target_sub_dof = 0
+                    elif direction in ("y", "1"):
+                        target_sub_dof = 1
+                    elif direction in ("z", "2"):
+                        target_sub_dof = 2 if dofs_per_node == 6 else 1
+                    else:
+                        raise ValueError(
+                            f"Unrecognized ground motion direction {direction!r}; use 'x', 'y' or 'z' (or 0, 1, 2)."
+                        )
+
+                    inf_vec = np.zeros(self.ndof)
+                    for i, dof_idx in enumerate(struct.free_dofs):
+                        if dof_idx % dofs_per_node == target_sub_dof:
+                            inf_vec[i] = 1.0
             else:
                 inf_vec = np.ones(self.ndof)
         inf_vec = np.asarray(inf_vec)
@@ -552,8 +554,11 @@ class MDF:
             struct = self.elements
 
         if struct is not None:
-            d = np.zeros(struct.neq)
-            d[struct.free_dofs] = u
+            if hasattr(struct, "expand_displacements"):
+                d = struct.expand_displacements(u)
+            else:
+                d = np.zeros(struct.neq)
+                d[struct.free_dofs] = u
             f_int = np.zeros(struct.neq)
             Kt = np.zeros((struct.neq, struct.neq))
             for el in struct.elements.values():
@@ -562,6 +567,18 @@ class MDF:
                 dofs = el.node_i.dofs + el.node_j.dofs
                 f_int[dofs] += el.get_internal_forces()
                 Kt[np.ix_(dofs, dofs)] += el.get_tangent_stiffness()
+            for node in getattr(struct, "nodes", {}).values():
+                if hasattr(node, "springs") and any(node.springs):
+                    for i_dof, k_val in enumerate(node.springs):
+                        if k_val > 0.0:
+                            dof = node.dofs[i_dof]
+                            f_int[dof] += float(k_val) * d[dof]
+                            Kt[dof, dof] += float(k_val)
+            if hasattr(struct, "reduce_vector") and hasattr(struct, "reduce_matrix"):
+                Kt_red = struct.reduce_matrix(Kt)
+                if sp.issparse(Kt_red):
+                    Kt_red = Kt_red.toarray()
+                return struct.reduce_vector(f_int), Kt_red
             return f_int[struct.free_dofs], Kt[np.ix_(struct.free_dofs, struct.free_dofs)]
 
         Fs = np.zeros(self.ndof)
@@ -609,8 +626,11 @@ class MDF:
             struct = self.elements
 
         if struct is not None:
-            d = np.zeros(struct.neq)
-            d[struct.free_dofs] = u
+            if hasattr(struct, "expand_displacements"):
+                d = struct.expand_displacements(u)
+            else:
+                d = np.zeros(struct.neq)
+                d[struct.free_dofs] = u
             for el in struct.elements.values():
                 if hasattr(el, "update_state"):
                     el.update_state(d)
