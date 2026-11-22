@@ -9,6 +9,10 @@ All notable changes to `structdyn` are recorded in this file. The format follows
 ## [Unreleased]
 
 ### Added
+- **Rigid floor diaphragms (`fem3d/DIAPHRAGM_PLAN.md`, M2):** updated `MDF` (`from_fem`, `from_fem3d`) and
+  `ResponseSpectrumAnalysis` to operate in reduced diaphragm coordinates via `fem3d`'s `reduce_matrix`, `reduce_vector`,
+  `influence_vector`, and `expand_displacements` across modal analysis, ground-motion time-history, and response
+  spectrum combinations (CQC/SRSS/ABS). Tests: `tests/test_diaphragms.py`.
 - Sparse systems: `MDF` accepts `scipy.sparse` K and M. Up to `DENSE_DOF_LIMIT` (2000) DOFs they are made
   dense, so every method works as before. Larger sparse systems stay sparse (`MDF.is_sparse`):
   `ModalAnalysis.modal_analysis` uses `scipy.sparse.linalg.eigsh` in shift-invert mode at sigma = 0 with a
